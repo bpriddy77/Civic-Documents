@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth/session'
 import { can } from '@/lib/permissions/permissions'
 import { ROLE_LABELS } from '@/lib/permissions/permissions'
 import { SkipLink } from '@/components/accessibility/SkipLink'
+import { VendorFooter } from '@/components/VendorFooter'
 
 export const metadata: Metadata = {
   title: { default: 'Administration', template: '%s | Records administration' },
@@ -77,6 +78,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         )}
         {children}
       </main>
+
+      <footer className="mt-12 border-t border-rule px-4 py-6">
+        <VendorFooter />
+      </footer>
     </div>
   )
 }

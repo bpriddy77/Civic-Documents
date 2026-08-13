@@ -7,6 +7,7 @@ import { getMunicipalityBySlug, tenantConfig } from '@/lib/data/tenant'
 import { getPublicMeeting } from '@/lib/data/meetings'
 import { activeDocument, documentLinkLabel, documentPath, meetingUrl } from '@/lib/documents/urls'
 import { formatMeetingWhen, isoDateTime } from '@/lib/time/tenant-time'
+import { VendorFooter } from '@/components/VendorFooter'
 
 export const revalidate = 60
 
@@ -173,6 +174,10 @@ export default async function MeetingDetailPage({ params }: { params: Params }) 
             <a href={meetingUrl(meeting)}>{meetingUrl(meeting)}</a>
           </p>
         </main>
+
+        <footer className="mt-12 border-t border-rule pt-6">
+          <VendorFooter />
+        </footer>
       </div>
 
       <script

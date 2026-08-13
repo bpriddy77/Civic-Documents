@@ -15,6 +15,23 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.3.1] - 2026-08-13
+
+**No database changes.**
+
+### Added
+
+- Vendor attribution and build version in the footer of the public archive, meeting detail pages, and the administration. The version is shown so a bug report can name the build without anyone having to dig for it.
+
+### Notes
+
+The notice is scoped to the software rather than the records: meeting agendas
+and minutes are public documents of the municipality and are not the vendor's
+copyright. Wording matters here — a bare copyright line over a page of public
+minutes invites a public-information complaint.
+
+---
+
 ## [1.3.0] - 2026-08-13
 
 **No database changes.** Nothing to re-paste in the SQL Editor; the schema

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { ArchiveFilters } from '@/components/public/ArchiveFilters'
 import { MeetingList } from '@/components/public/MeetingList'
+import { VendorFooter } from '@/components/VendorFooter'
 import { Pagination } from '@/components/public/Pagination'
 import { getMunicipalityBySlug, tenantConfig } from '@/lib/data/tenant'
 import { listPublicCategories, listPublicMeetings, listPublicYears } from '@/lib/data/meetings'
@@ -134,6 +135,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
             Need a document in an alternative format? Contact the city clerk&rsquo;s office and it
             will be provided.
           </p>
+          <VendorFooter className="mt-4 border-t border-rule pt-4" />
         </div>
       </footer>
     </>
