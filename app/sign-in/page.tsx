@@ -9,16 +9,16 @@ export const metadata: Metadata = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; error?: string }>
 }) {
-  const { next } = await searchParams
+  const { next, error } = await searchParams
   return (
     <main id="main" className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <h1 className="text-3xl font-semibold">Records administration</h1>
       <p className="mt-2 text-ink-muted">
         Sign in with the account your city administrator created for you.
       </p>
-      <SignInForm next={next ?? '/admin'} />
+      <SignInForm next={next ?? '/admin'} initialError={error} />
     </main>
   )
 }

@@ -15,6 +15,29 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.3.0] - 2026-08-13
+
+**No database changes.** Nothing to re-paste in the SQL Editor; the schema
+stays at 1.2.0.
+
+### Added
+
+- **Google sign-in.** Staff can authenticate with their Google account instead of a separate password. Password sign-in remains available and should not be removed — it is the fallback when Google is unreachable.
+- `docs/GOOGLE-SIGN-IN.md`, covering setup and the access model.
+
+### Changed
+
+- `/auth/callback` now confirms an active `profiles` row before completing any sign-in, and signs the session out if there is none. Google will authenticate any Google account in existence, so authentication had to be separated from authorisation explicitly. Previously an unknown account would have been bounced from `/admin` with no explanation.
+- The sign-in page reports why a redirect happened — an unrecognised account, or an expired link — rather than silently re-rendering the form.
+
+### Notes
+
+Enabling Google does not widen access. Access still requires a profile created
+by an administrator, enforced in the callback and again by Row-Level Security.
+The email on the profile must match the Google account exactly.
+
+---
+
 ## [1.2.0] - 2026-08-13
 
 ### Added
