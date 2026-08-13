@@ -1,6 +1,6 @@
 {
   "name": "local-government-records",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Agenda & minutes management and public records archive for municipalities.",
   "engines": {
@@ -21,11 +21,14 @@
     "db:diff": "supabase db diff -f",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "bootstrap:tenant": "tsx scripts/bootstrap-tenant.ts"
+    "bootstrap:tenant": "tsx scripts/bootstrap-tenant.ts",
+    "build:setup-sql": "node scripts/build-setup-sql.mjs",
+    "validate:sql": "node scripts/validate-setup-sql.mjs",
+    "release": "node scripts/build-release.mjs"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
-    "@supabase/ssr": "^0.5.2",
+    "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.45.4",
     "date-fns": "^4.4.0",
     "next": "^15.0.3",

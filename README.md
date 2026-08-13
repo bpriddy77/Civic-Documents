@@ -92,6 +92,10 @@ The seed creates a sample city and a local sign-in:
 
 Full production setup, step by step, is in **[docs/INSTALLATION.md](docs/INSTALLATION.md)**.
 
+**No terminal?** **[docs/WEB-SETUP.md](docs/WEB-SETUP.md)** installs the whole
+system from the Supabase dashboard — paste three SQL files, set five
+environment variables, deploy. No CLI and no Docker required.
+
 ---
 
 ## Everyday commands
@@ -108,6 +112,10 @@ npm run db:reset       # rebuild the local database from migrations + seed
 npm run db:diff -- add_meeting_notes   # capture local changes as a new migration
 npm run db:push        # apply pending migrations to the linked project
 npm run db:types       # regenerate lib/supabase/database.types.ts
+
+npm run build:setup-sql  # regenerate the dashboard install SQL from migrations
+npm run validate:sql     # apply that SQL to a real Postgres and assert it
+npm run release          # build dist/local-government-records-v<version>.zip
 ```
 
 ---
@@ -227,6 +235,8 @@ iframe fallback, and how staff reach the administration from GoHighLevel.
 
 | Document | Covers |
 | --- | --- |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
+| [WEB-SETUP.md](docs/WEB-SETUP.md) | Dashboard-only setup, no CLI required |
 | [INSTALLATION.md](docs/INSTALLATION.md) | Complete setup, GitHub through production |
 | [SUPABASE.md](docs/SUPABASE.md) | CLI workflow, project linking, storage, auth settings |
 | [DATABASE.md](docs/DATABASE.md) | Schema, relationships, RLS policies, indexes |
