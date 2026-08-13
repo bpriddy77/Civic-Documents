@@ -157,22 +157,27 @@ begin
 end;
 $$;
 
+drop trigger if exists meetings_audit on public.meetings;
 create trigger meetings_audit
   after insert or update or delete on public.meetings
   for each row execute function public.audit_row_change('meeting');
 
+drop trigger if exists meeting_documents_audit on public.meeting_documents;
 create trigger meeting_documents_audit
   after insert or update or delete on public.meeting_documents
   for each row execute function public.audit_row_change('document');
 
+drop trigger if exists meeting_categories_audit on public.meeting_categories;
 create trigger meeting_categories_audit
   after insert or update or delete on public.meeting_categories
   for each row execute function public.audit_row_change('category');
 
+drop trigger if exists profiles_audit on public.profiles;
 create trigger profiles_audit
   after insert or update or delete on public.profiles
   for each row execute function public.audit_row_change('user');
 
+drop trigger if exists municipalities_audit on public.municipalities;
 create trigger municipalities_audit
   after insert or update or delete on public.municipalities
   for each row execute function public.audit_row_change('municipality');
@@ -188,6 +193,7 @@ begin
 end;
 $$;
 
+drop trigger if exists audit_log_immutable on public.audit_log;
 create trigger audit_log_immutable
   before update or delete on public.audit_log
   for each row execute function public.reject_audit_mutation();

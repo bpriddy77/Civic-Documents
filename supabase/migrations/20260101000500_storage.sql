@@ -20,7 +20,7 @@ on conflict (id) do update
       allowed_mime_types = excluded.allowed_mime_types;
 
 -- Path shape: municipalities/{municipality_id}/meetings/{meeting_id}/{type}/{file}
-create or replace function storage.object_municipality_id(object_name text)
+create or replace function public.object_municipality_id(object_name text)
 returns uuid language plpgsql immutable as $$
 declare parts text[] := string_to_array(object_name, '/');
 begin
@@ -32,34 +32,38 @@ exception when others then return null;
 end;
 $$;
 
+drop policy if exists "staff read own municipality documents" on storage.objects;
 create policy "staff read own municipality documents"
   on storage.objects for select to authenticated
   using (
     bucket_id = 'meeting-documents'
-    and public.may('document.read', storage.object_municipality_id(name))
+    and public.may('document.read', public.object_municipality_id(name))
   );
 
+drop policy if exists "staff write own municipality documents" on storage.objects;
 create policy "staff write own municipality documents"
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'meeting-documents'
-    and public.may('document.manage', storage.object_municipality_id(name))
+    and public.may('document.manage', public.object_municipality_id(name))
   );
 
+drop policy if exists "staff update own municipality documents" on storage.objects;
 create policy "staff update own municipality documents"
   on storage.objects for update to authenticated
   using (
     bucket_id = 'meeting-documents'
-    and public.may('document.manage', storage.object_municipality_id(name))
+    and public.may('document.manage', public.object_municipality_id(name))
   );
 
 -- Superseded versions are retained. Only a role holding document.delete may
 -- remove bytes, and only inside its own tenant folder.
+drop policy if exists "restricted delete of municipality documents" on storage.objects;
 create policy "restricted delete of municipality documents"
   on storage.objects for delete to authenticated
   using (
     bucket_id = 'meeting-documents'
-    and public.may('document.delete', storage.object_municipality_id(name))
+    and public.may('document.delete', public.object_municipality_id(name))
   );
 
 -- Deliberately absent: any policy granting the `anon` role access to

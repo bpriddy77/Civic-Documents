@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/database.types'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 /**
@@ -20,14 +21,14 @@ const serviceKey = process.env.SUPABASE_TEST_SERVICE_KEY
 const configured = Boolean(url && anonKey && serviceKey)
 
 describe.skipIf(!configured)('Row-Level Security', () => {
-  let anon: ReturnType<typeof createClient>
-  let service: ReturnType<typeof createClient>
+  let anon: ReturnType<typeof createClient<Database>>
+  let service: ReturnType<typeof createClient<Database>>
   let tenantA: string
   let tenantB: string
 
   beforeAll(async () => {
-    anon = createClient(url!, anonKey!)
-    service = createClient(url!, serviceKey!, { auth: { persistSession: false } })
+    anon = createClient<Database>(url!, anonKey!)
+    service = createClient<Database>(url!, serviceKey!, { auth: { persistSession: false } })
 
     const { data: municipalities } = await service
       .from('municipalities')
@@ -40,8 +41,8 @@ describe.skipIf(!configured)('Row-Level Security', () => {
       )
       .select('id, slug')
 
-    tenantA = municipalities!.find((m) => m.slug === 'tenant-a')!.id as string
-    tenantB = municipalities!.find((m) => m.slug === 'tenant-b')!.id as string
+    tenantA = municipalities!.find((m) => m.slug === 'tenant-a')!.id
+    tenantB = municipalities!.find((m) => m.slug === 'tenant-b')!.id
 
     const { data: category } = await service
       .from('meeting_categories')

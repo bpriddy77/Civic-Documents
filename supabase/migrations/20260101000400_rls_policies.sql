@@ -30,22 +30,27 @@ grant select on public.audit_log to authenticated;
 -- ---------------------------------------------------------------------
 -- municipalities
 -- ---------------------------------------------------------------------
+drop policy if exists municipalities_public_read on public.municipalities;
 create policy municipalities_public_read on public.municipalities
   for select to anon using (active);
 
+drop policy if exists municipalities_member_read on public.municipalities;
 create policy municipalities_member_read on public.municipalities
   for select to authenticated
   using (public.is_super_admin() or id = public.current_municipality_id());
 
+drop policy if exists municipalities_update on public.municipalities;
 create policy municipalities_update on public.municipalities
   for update to authenticated
   using (public.may('municipality.update', id))
   with check (public.may('municipality.update', id));
 
+drop policy if exists municipalities_insert on public.municipalities;
 create policy municipalities_insert on public.municipalities
   for insert to authenticated
   with check (public.is_super_admin());
 
+drop policy if exists municipalities_delete on public.municipalities;
 create policy municipalities_delete on public.municipalities
   for delete to authenticated
   using (public.is_super_admin());
@@ -53,22 +58,27 @@ create policy municipalities_delete on public.municipalities
 -- ---------------------------------------------------------------------
 -- reference data
 -- ---------------------------------------------------------------------
+drop policy if exists document_types_read on public.document_types;
 create policy document_types_read on public.document_types
   for select to anon, authenticated using (true);
 
+drop policy if exists role_permissions_read on public.role_permissions;
 create policy role_permissions_read on public.role_permissions
   for select to authenticated using (true);
 
 -- ---------------------------------------------------------------------
 -- profiles
 -- ---------------------------------------------------------------------
+drop policy if exists profiles_self_read on public.profiles;
 create policy profiles_self_read on public.profiles
   for select to authenticated using (auth_user_id = auth.uid());
 
+drop policy if exists profiles_tenant_read on public.profiles;
 create policy profiles_tenant_read on public.profiles
   for select to authenticated
   using (public.may('user.read', municipality_id));
 
+drop policy if exists profiles_manage_insert on public.profiles;
 create policy profiles_manage_insert on public.profiles
   for insert to authenticated
   with check (
@@ -77,6 +87,7 @@ create policy profiles_manage_insert on public.profiles
     and (role <> 'super_admin' or public.is_super_admin())
   );
 
+drop policy if exists profiles_manage_update on public.profiles;
 create policy profiles_manage_update on public.profiles
   for update to authenticated
   using (public.may('user.manage', municipality_id))
@@ -86,6 +97,7 @@ create policy profiles_manage_update on public.profiles
   );
 
 -- Accounts are disabled, not deleted, so history keeps its author.
+drop policy if exists profiles_delete on public.profiles;
 create policy profiles_delete on public.profiles
   for delete to authenticated
   using (public.is_super_admin());
@@ -93,6 +105,7 @@ create policy profiles_delete on public.profiles
 -- ---------------------------------------------------------------------
 -- meeting_categories
 -- ---------------------------------------------------------------------
+drop policy if exists categories_public_read on public.meeting_categories;
 create policy categories_public_read on public.meeting_categories
   for select to anon
   using (
@@ -101,19 +114,23 @@ create policy categories_public_read on public.meeting_categories
                 where m.id = municipality_id and m.active)
   );
 
+drop policy if exists categories_member_read on public.meeting_categories;
 create policy categories_member_read on public.meeting_categories
   for select to authenticated
   using (public.may('category.read', municipality_id));
 
+drop policy if exists categories_insert on public.meeting_categories;
 create policy categories_insert on public.meeting_categories
   for insert to authenticated
   with check (public.may('category.manage', municipality_id));
 
+drop policy if exists categories_update on public.meeting_categories;
 create policy categories_update on public.meeting_categories
   for update to authenticated
   using (public.may('category.manage', municipality_id))
   with check (public.may('category.manage', municipality_id));
 
+drop policy if exists categories_delete on public.meeting_categories;
 create policy categories_delete on public.meeting_categories
   for delete to authenticated
   using (public.may('category.delete', municipality_id));
@@ -126,6 +143,7 @@ create policy categories_delete on public.meeting_categories
 -- never leave a row in the published state - including by editing one that
 -- is already published.
 -- ---------------------------------------------------------------------
+drop policy if exists meetings_public_read on public.meetings;
 create policy meetings_public_read on public.meetings
   for select to anon
   using (
@@ -134,10 +152,12 @@ create policy meetings_public_read on public.meetings
                 where m.id = municipality_id and m.active)
   );
 
+drop policy if exists meetings_member_read on public.meetings;
 create policy meetings_member_read on public.meetings
   for select to authenticated
   using (public.may('meeting.read', municipality_id));
 
+drop policy if exists meetings_insert on public.meetings;
 create policy meetings_insert on public.meetings
   for insert to authenticated
   with check (
@@ -146,6 +166,7 @@ create policy meetings_insert on public.meetings
     and (status <> 'archived'  or public.has_permission('meeting.archive'))
   );
 
+drop policy if exists meetings_update on public.meetings;
 create policy meetings_update on public.meetings
   for update to authenticated
   using (public.may('meeting.update', municipality_id))
@@ -155,6 +176,7 @@ create policy meetings_update on public.meetings
     and (status <> 'archived'  or public.has_permission('meeting.archive'))
   );
 
+drop policy if exists meetings_delete on public.meetings;
 create policy meetings_delete on public.meetings
   for delete to authenticated
   using (public.may('meeting.delete', municipality_id));
@@ -162,6 +184,7 @@ create policy meetings_delete on public.meetings
 -- ---------------------------------------------------------------------
 -- meeting_documents
 -- ---------------------------------------------------------------------
+drop policy if exists documents_public_read on public.meeting_documents;
 create policy documents_public_read on public.meeting_documents
   for select to anon
   using (
@@ -179,19 +202,23 @@ create policy documents_public_read on public.meeting_documents
     )
   );
 
+drop policy if exists documents_member_read on public.meeting_documents;
 create policy documents_member_read on public.meeting_documents
   for select to authenticated
   using (public.may('document.read', municipality_id));
 
+drop policy if exists documents_insert on public.meeting_documents;
 create policy documents_insert on public.meeting_documents
   for insert to authenticated
   with check (public.may('document.manage', municipality_id));
 
+drop policy if exists documents_update on public.meeting_documents;
 create policy documents_update on public.meeting_documents
   for update to authenticated
   using (public.may('document.manage', municipality_id))
   with check (public.may('document.manage', municipality_id));
 
+drop policy if exists documents_delete on public.meeting_documents;
 create policy documents_delete on public.meeting_documents
   for delete to authenticated
   using (public.may('document.delete', municipality_id));
@@ -201,6 +228,7 @@ create policy documents_delete on public.meeting_documents
 -- Rows are inserted by public.record_audit_event(), which is SECURITY
 -- DEFINER and owned by the table owner, so it bypasses these policies.
 -- ---------------------------------------------------------------------
+drop policy if exists audit_read on public.audit_log;
 create policy audit_read on public.audit_log
   for select to authenticated
   using (public.may('audit.read', municipality_id));

@@ -76,12 +76,16 @@ begin
 end;
 $$;
 
+drop trigger if exists municipalities_touch on public.municipalities;
 create trigger municipalities_touch before update on public.municipalities
   for each row execute function public.touch_updated_at();
+drop trigger if exists profiles_touch on public.profiles;
 create trigger profiles_touch before update on public.profiles
   for each row execute function public.touch_updated_at();
+drop trigger if exists meeting_categories_touch on public.meeting_categories;
 create trigger meeting_categories_touch before update on public.meeting_categories
   for each row execute function public.touch_updated_at();
+drop trigger if exists meetings_touch on public.meetings;
 create trigger meetings_touch before update on public.meetings
   for each row execute function public.touch_updated_at();
 
@@ -99,6 +103,7 @@ begin
 end;
 $$;
 
+drop trigger if exists municipalities_timezone_check on public.municipalities;
 create trigger municipalities_timezone_check
   before insert or update of timezone on public.municipalities
   for each row execute function public.assert_valid_timezone();
@@ -121,6 +126,7 @@ begin
 end;
 $$;
 
+drop trigger if exists meetings_set_starts_at on public.meetings;
 create trigger meetings_set_starts_at
   before insert or update of meeting_date, meeting_time, municipality_id on public.meetings
   for each row execute function public.set_meeting_starts_at();
@@ -140,6 +146,7 @@ begin
 end;
 $$;
 
+drop trigger if exists municipalities_timezone_recompute on public.municipalities;
 create trigger municipalities_timezone_recompute
   after update of timezone on public.municipalities
   for each row execute function public.recompute_tenant_meeting_instants();
@@ -171,6 +178,7 @@ begin
 end;
 $$;
 
+drop trigger if exists meetings_lifecycle on public.meetings;
 create trigger meetings_lifecycle
   before insert or update on public.meetings
   for each row execute function public.maintain_meeting_lifecycle();
@@ -191,6 +199,7 @@ begin
 end;
 $$;
 
+drop trigger if exists meetings_category_tenant on public.meetings;
 create trigger meetings_category_tenant
   before insert or update of category_id, municipality_id on public.meetings
   for each row execute function public.assert_category_tenant();
@@ -211,6 +220,7 @@ begin
 end;
 $$;
 
+drop trigger if exists meeting_documents_tenant on public.meeting_documents;
 create trigger meeting_documents_tenant
   before insert or update of meeting_id, municipality_id on public.meeting_documents
   for each row execute function public.assert_document_tenant();
@@ -231,6 +241,7 @@ begin
 end;
 $$;
 
+drop trigger if exists meeting_documents_minutes_status on public.meeting_documents;
 create trigger meeting_documents_minutes_status
   after insert on public.meeting_documents
   for each row execute function public.sync_minutes_status_on_upload();
