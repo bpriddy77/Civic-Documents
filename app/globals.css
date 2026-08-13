@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    /* Text stays fluid between 16px and 18px so a 200% browser zoom
+       reflows rather than clipping. */
+    font-size: clamp(1rem, 0.97rem + 0.15vw, 1.125rem);
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display text-ink;
+    text-wrap: balance;
+  }
+
+  /* A focus ring that is visible on paper, on navy, and on the sunk surface. */
+  :focus-visible {
+    outline: 3px solid #1B3A5C;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  a {
+    @apply text-civic underline underline-offset-2;
+  }
+  a:hover {
+    @apply text-civic-hover;
+  }
+
+  /* Every interactive target clears the 24x24 CSS px minimum in WCAG 2.2. */
+  button, a, input, select, [role='button'] {
+    min-height: 24px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The docket line: a fixed date column against a hairline rule, the way a
+     meeting appears in a physical minute book. */
+  .docket {
+    @apply grid gap-x-5 gap-y-2 border-t border-rule py-5;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 40rem) {
+    .docket {
+      grid-template-columns: 9.5rem minmax(0, 1fr);
+    }
+  }
+
+  .docket-date {
+    @apply font-display text-ink;
+  }
+
+  .eyebrow {
+    @apply text-eyebrow uppercase font-sans font-semibold text-ink-muted;
+  }
+
+  .field-label {
+    @apply block text-sm font-semibold text-ink mb-1;
+  }
+
+  .field {
+    @apply w-full rounded border border-rule-strong bg-paper px-3 py-2 text-ink
+           placeholder:text-ink-faint;
+  }
+  .field[aria-invalid='true'] {
+    @apply border-red-700;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded border px-4 py-2
+           font-sans text-sm font-semibold no-underline;
+    min-height: 44px;
+  }
+  .btn-primary {
+    @apply btn border-civic bg-civic text-white hover:bg-civic-hover hover:text-white;
+  }
+  .btn-secondary {
+    @apply btn border-rule-strong bg-paper text-ink hover:bg-paper-sunk hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn border-red-800 bg-red-800 text-white hover:bg-red-900 hover:text-white;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-xs
+           font-semibold uppercase tracking-wide;
+  }
+
+  .table-wrap {
+    @apply -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0;
+  }
+}
