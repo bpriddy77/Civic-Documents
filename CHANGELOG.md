@@ -15,6 +15,25 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.4.1] - 2026-08-13
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. It is idempotent and safe to paste over an existing install.
+
+### Fixed
+
+- **Uploading minutes failed with "The document could not be recorded against this meeting."** In PostgreSQL, `text[] || 'literal'` is ambiguous: it resolves to `array || array` and then fails with *malformed array literal*. Five places in `audit_row_change()` appended an audit action that way, so **every status transition that wrote an audit entry was broken** — publishing, archiving, restoring, minutes-status changes, role changes, and enabling or disabling an account.
+
+  The minutes upload surfaced it because that path fires a trigger that updates the meeting, three calls deep, and the resulting error reached the clerk as a generic save failure. Every appended action is now explicitly cast to `::text`, with a comment at the site so it is not reintroduced.
+
+### Added
+
+- `npm run validate:audit` — applies the schema to a real PostgreSQL engine, then exercises uploads, replacements, and every status transition as the `authenticated` role with RLS active, asserting each writes its audit entry. This bug was invisible to unit tests because it only appeared through trigger execution under a real engine.
+
+  It also asserts that document replacement preserves the public slug, and that an `admin` cannot promote anyone to `super_admin`.
+
+---
+
 ## [1.4.0] - 2026-08-13
 
 **No database changes.** The new setting lives in the existing `configuration`
