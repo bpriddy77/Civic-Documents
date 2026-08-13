@@ -15,6 +15,29 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.4.0] - 2026-08-13
+
+**No database changes.** The new setting lives in the existing `configuration`
+JSON column and defaults sensibly, so nothing needs updating for existing
+municipalities.
+
+### Added
+
+- **`archive_about`** — a purpose statement shown under the heading on the public archive, editable at Admin → Settings → *About this archive*. Defaults to text explaining that the site is the city's official record of public meetings, that everything on it is free to read and share, and that no account is needed to read it.
+
+### Changed
+
+- The public archive's introductory paragraph now comes from that setting rather than being fixed in code. The previous text described the documents; the new default describes the system, which is what a first-time visitor needs.
+
+### Notes
+
+Written partly because Google's OAuth branding review requires an application
+home page that explains the app's purpose. It is worth having regardless — a
+citizen landing on a bare list of meetings should not have to infer what the
+site is.
+
+---
+
 ## [1.3.1] - 2026-08-13
 
 **No database changes.**

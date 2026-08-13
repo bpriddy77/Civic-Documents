@@ -59,10 +59,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
         <div className="mx-auto max-w-5xl px-4 py-8">
           <p className="eyebrow">{municipality.name}</p>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">{config.archive_heading}</h1>
-          <p className="mt-3 max-w-prose text-ink-muted">
-            Agendas are posted in advance of each meeting. Minutes are posted after the governing
-            body approves them. All documents open as PDF files.
-          </p>
+          <p className="mt-3 max-w-prose text-ink-muted">{config.archive_about}</p>
         </div>
       </header>
 

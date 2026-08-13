@@ -22,6 +22,7 @@ export function SettingsForm({
     contact_email: municipality.contact_email ?? '',
     contact_phone: municipality.contact_phone ?? '',
     archive_heading: config.archive_heading,
+    archive_about: config.archive_about,
     meetings_per_page: String(config.meetings_per_page),
     default_sort: config.default_sort,
     time_format: config.time_format,
@@ -56,6 +57,7 @@ export function SettingsForm({
         contact_phone: form.contact_phone,
         configuration: {
           archive_heading: form.archive_heading,
+          archive_about: form.archive_about,
           meetings_per_page: Number(form.meetings_per_page),
           default_sort: form.default_sort,
           time_format: form.time_format,
@@ -139,6 +141,24 @@ export function SettingsForm({
             <input id="archive_heading" className="field" value={form.archive_heading}
                    onChange={(e) => set('archive_heading', e.target.value)} />
           </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="archive_about" className="field-label">
+              About this archive
+            </label>
+            <textarea
+              id="archive_about"
+              rows={4}
+              className="field"
+              value={form.archive_about}
+              onChange={(e) => set('archive_about', e.target.value)}
+              aria-describedby="archive-about-help"
+            />
+            <p id="archive-about-help" className="mt-1 text-sm text-ink-muted">
+              Shown under the heading on the public archive. Explain what this site is, so a
+              first-time visitor understands it is the city&rsquo;s official record.
+            </p>
+          </div>
+
           <div>
             <label htmlFor="meetings_per_page" className="field-label">Meetings per page</label>
             <input id="meetings_per_page" type="number" min={5} max={100} className="field"
