@@ -237,6 +237,7 @@ iframe fallback, and how staff reach the administration from GoHighLevel.
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
 | [WEB-SETUP.md](docs/WEB-SETUP.md) | Dashboard-only setup, no CLI required |
+| [GOOGLE-SIGN-IN.md](docs/GOOGLE-SIGN-IN.md) | Signing in with Google instead of a password |
 | [INSTALLATION.md](docs/INSTALLATION.md) | Complete setup, GitHub through production |
 | [SUPABASE.md](docs/SUPABASE.md) | CLI workflow, project linking, storage, auth settings |
 | [DATABASE.md](docs/DATABASE.md) | Schema, relationships, RLS policies, indexes |

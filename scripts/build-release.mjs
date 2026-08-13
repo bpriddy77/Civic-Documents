@@ -36,11 +36,18 @@ const recorded = readFileSync(join(migrationsDir, versionFile), 'utf8').match(
   /values \('(\d+\.\d+\.\d+)'/,
 )?.[1]
 
-if (recorded !== version) {
+// The schema version tracks the last release that changed the schema, so it may
+// lag the app version. It must never lead it — that would mean shipping code
+// older than the database it describes.
+const asNumber = (v) => v.split('.').map(Number).reduce((a, n, i) => a + n * [1e6, 1e3, 1][i], 0)
+if (asNumber(recorded) > asNumber(version)) {
   fail(
-    `Version mismatch: package.json says ${version}, ${versionFile} says ${recorded}.\n` +
-      `  The database would report a different version than the code.`,
+    `Schema version ${recorded} is ahead of package.json ${version}.\n` +
+      `  The database would report a newer version than the code.`,
   )
+}
+if (!changelog.includes(`## [${recorded}]`)) {
+  fail(`Schema version ${recorded} has no changelog entry.`)
 }
 
 // The generated setup SQL must include every migration, or a dashboard install

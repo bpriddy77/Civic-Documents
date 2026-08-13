@@ -21,9 +21,18 @@ describe('release version', () => {
     expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  it('matches the version recorded in the schema_version migration', () => {
+  it('records a schema version that is a real, released version', () => {
     const recorded = migrationSql.match(/values \('(\d+\.\d+\.\d+)'/)?.[1]
-    expect(recorded).toBe(pkg.version)
+    expect(recorded).toMatch(/^\d+\.\d+\.\d+$/)
+    // The schema version tracks the last release that CHANGED the schema, so
+    // it may lag the app version on a code-only release. It must never lead.
+    expect(changelog).toContain(`## [${recorded}]`)
+    const order = (v: string) => v.split('.').map(Number)
+    const [rMaj, rMin, rPatch] = order(recorded!)
+    const [pMaj, pMin, pPatch] = order(pkg.version)
+    const recordedValue = rMaj! * 1e6 + rMin! * 1e3 + rPatch!
+    const packageValue = pMaj! * 1e6 + pMin! * 1e3 + pPatch!
+    expect(recordedValue).toBeLessThanOrEqual(packageValue)
   })
 
   it('has a changelog entry for the current version', () => {
