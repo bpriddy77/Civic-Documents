@@ -98,26 +98,29 @@ begin
       actions := array[entity || '.created'];
     end if;
 
+  -- NOTE: every append to `actions` must cast the right side to ::text.
+  -- `text[] || 'literal'` is ambiguous in PostgreSQL; it resolves to
+  -- array || array and then fails with "malformed array literal".
   elsif tg_op = 'DELETE' then
     actions := array[entity || '.deleted'];
 
   else
     if entity = 'meeting' then
       if new.status is distinct from old.status then
-        actions := actions || case new.status
+        actions := actions || (case new.status
           when 'published' then 'meeting.published'
           when 'archived'  then 'meeting.archived'
           when 'draft'     then case when old.status = 'archived'
                                      then 'meeting.restored'
                                      else 'meeting.unpublished' end
-        end;
+        end)::text;
       end if;
       if new.minutes_status is distinct from old.minutes_status then
-        actions := actions || 'meeting.minutes_status_changed';
+        actions := actions || 'meeting.minutes_status_changed'::text;
         meta := meta || jsonb_build_object('from', old.minutes_status, 'to', new.minutes_status);
       end if;
       if new.category_id is distinct from old.category_id then
-        actions := actions || 'meeting.category_changed';
+        actions := actions || 'meeting.category_changed'::text;
       end if;
       if actions = '{}' then actions := array['meeting.updated']; end if;
 
@@ -133,11 +136,11 @@ begin
 
     elsif entity = 'user' then
       if new.role is distinct from old.role then
-        actions := actions || 'user.role_changed';
+        actions := actions || 'user.role_changed'::text;
         meta := meta || jsonb_build_object('from', old.role, 'to', new.role);
       end if;
       if new.active is distinct from old.active then
-        actions := actions || case when new.active then 'user.enabled' else 'user.disabled' end;
+        actions := actions || (case when new.active then 'user.enabled' else 'user.disabled' end)::text;
       end if;
       if actions = '{}' then actions := array['user.updated']; end if;
 

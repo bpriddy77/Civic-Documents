@@ -36,7 +36,7 @@ create policy schema_version_read on public.schema_version
 -- elevated privileges, writes here.
 
 insert into public.schema_version (version, notes)
-values ('1.2.0', 'Adds schema version tracking and idempotent policies/triggers.')
+values ('1.4.1', 'Fixes audit trigger array concatenation that blocked status changes.')
 on conflict (version) do update
   set applied_at = now(),
       notes = excluded.notes;
