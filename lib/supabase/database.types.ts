@@ -14,7 +14,7 @@ export type MeetingStatus = 'draft' | 'published' | 'archived'
 export type MinutesStatus = 'not_available' | 'draft' | 'pending_approval' | 'approved'
 export type DocumentType = 'agenda' | 'minutes' | (string & {})
 
-export interface MunicipalityConfiguration {
+export type MunicipalityConfiguration = {
   date_format?: string
   time_format?: string
   meetings_per_page?: number
@@ -27,7 +27,7 @@ export interface MunicipalityConfiguration {
   primary_color?: string
 }
 
-export interface Municipality {
+export type Municipality = {
   id: string
   name: string
   slug: string
@@ -43,7 +43,7 @@ export interface Municipality {
   updated_at: string
 }
 
-export interface Profile {
+export type Profile = {
   id: string
   auth_user_id: string
   municipality_id: string | null
@@ -56,7 +56,7 @@ export interface Profile {
   updated_at: string
 }
 
-export interface MeetingCategory {
+export type MeetingCategory = {
   id: string
   municipality_id: string
   name: string
@@ -69,7 +69,7 @@ export interface MeetingCategory {
   updated_at: string
 }
 
-export interface Meeting {
+export type Meeting = {
   id: string
   municipality_id: string
   category_id: string
@@ -90,7 +90,7 @@ export interface Meeting {
   updated_at: string
 }
 
-export interface MeetingDocument {
+export type MeetingDocument = {
   id: string
   municipality_id: string
   meeting_id: string
@@ -111,7 +111,7 @@ export interface MeetingDocument {
   removed_at: string | null
 }
 
-export interface AuditLogEntry {
+export type AuditLogEntry = {
   id: number
   municipality_id: string | null
   user_id: string | null
@@ -128,7 +128,7 @@ export interface AuditLogEntry {
   created_at: string
 }
 
-export interface DashboardCounts {
+export type DashboardCounts = {
   municipality_id: string
   upcoming: number
   drafts: number
@@ -139,22 +139,85 @@ export interface DashboardCounts {
   published_this_year: number
 }
 
-type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row> }
+/**
+ * A foreign key as PostgREST describes it. Declaring these is what lets the
+ * client resolve embedded selects like `category:meeting_categories(...)`.
+ */
+type Relationship = {
+  foreignKeyName: string
+  columns: string[]
+  isOneToOne?: boolean
+  referencedRelation: string
+  referencedColumns: string[]
+}
 
-export interface Database {
+/**
+ * postgrest-js only accepts a schema whose every table carries Row, Insert,
+ * Update, AND Relationships. Omit Relationships and the schema silently fails
+ * to satisfy GenericSchema, at which point every query in the codebase infers
+ * its row type as `never` — which surfaces far from here, as
+ * "Property 'id' does not exist on type 'never'" in whichever file the type
+ * checker happens to reach first.
+ */
+type Table<Row, Rel extends Relationship[] = []> = {
+  Row: Row
+  Insert: Partial<Row>
+  Update: Partial<Row>
+  Relationships: Rel
+}
+
+/** Declares one foreign key to `municipalities.id`, the tenant link every table carries. */
+type BelongsToMunicipality<FkName extends string> = [
+  {
+    foreignKeyName: FkName
+    columns: ['municipality_id']
+    isOneToOne: false
+    referencedRelation: 'municipalities'
+    referencedColumns: ['id']
+  },
+]
+
+export type Database = {
   public: {
     Tables: {
       municipalities: Table<Municipality>
-      profiles: Table<Profile>
-      meeting_categories: Table<MeetingCategory>
-      meetings: Table<Meeting>
-      meeting_documents: Table<MeetingDocument>
-      audit_log: Table<AuditLogEntry>
+      profiles: Table<Profile, BelongsToMunicipality<'profiles_municipality_id_fkey'>>
+      meeting_categories: Table<
+        MeetingCategory,
+        BelongsToMunicipality<'meeting_categories_municipality_id_fkey'>
+      >
+      meetings: Table<
+        Meeting,
+        [
+          ...BelongsToMunicipality<'meetings_municipality_id_fkey'>,
+          {
+            foreignKeyName: 'meetings_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'meeting_categories'
+            referencedColumns: ['id']
+          },
+        ]
+      >
+      meeting_documents: Table<
+        MeetingDocument,
+        [
+          ...BelongsToMunicipality<'meeting_documents_municipality_id_fkey'>,
+          {
+            foreignKeyName: 'meeting_documents_meeting_id_fkey'
+            columns: ['meeting_id']
+            isOneToOne: false
+            referencedRelation: 'meetings'
+            referencedColumns: ['id']
+          },
+        ]
+      >
+      audit_log: Table<AuditLogEntry, BelongsToMunicipality<'audit_log_municipality_id_fkey'>>
       role_permissions: Table<{ role: AppRole; permission: string }>
       document_types: Table<{ code: string; label: string; display_order: number; active: boolean }>
     }
     Views: {
-      meeting_dashboard_counts: { Row: DashboardCounts }
+      meeting_dashboard_counts: { Row: DashboardCounts; Relationships: [] }
     }
     Functions: {
       record_audit_event: {
@@ -169,6 +232,34 @@ export interface Database {
         }
         Returns: number
       }
+      /** Supersedes the live version of a document, preserving its public slug. */
+      upsert_meeting_document: {
+        Args: {
+          p_meeting_id: string
+          p_document_type: string
+          p_posted_date: string
+          p_storage_path: string
+          p_original_filename: string
+          p_stored_filename: string
+          p_file_size: number
+          p_sha256: string
+        }
+        Returns: MeetingDocument
+      }
+      /** Copies a recurring meeting's details onto a new date. Never copies documents. */
+      duplicate_meeting: {
+        Args: {
+          p_meeting_id: string
+          p_meeting_date: string
+          p_copy_description?: boolean
+        }
+        Returns: Meeting
+      }
+      /** Marks a document removed without deleting the stored object. */
+      retire_meeting_document: {
+        Args: { p_document_id: string }
+        Returns: MeetingDocument
+      }
     }
     Enums: {
       app_role: AppRole
@@ -178,8 +269,15 @@ export interface Database {
   }
 }
 
-/** A meeting joined with its category and live documents, as the UI uses it. */
-export interface MeetingWithRelations extends Meeting {
+/**
+ * A meeting joined with its category and live documents, as the UI uses it.
+ *
+ * Declared as a type alias rather than an interface on purpose: postgrest-js
+ * constrains every row to `Record<string, unknown>`, and an interface has no
+ * implicit index signature, so it silently fails that constraint. Every row
+ * type in this file is an alias for the same reason.
+ */
+export type MeetingWithRelations = Meeting & {
   category: Pick<MeetingCategory, 'id' | 'name' | 'slug'> | null
   documents: MeetingDocument[]
 }

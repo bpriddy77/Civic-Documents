@@ -89,7 +89,7 @@ export async function uploadDocument(input: {
     p_stored_filename: sanitizeFilename(input.file.name),
     p_file_size: check.size,
     p_sha256: check.sha256,
-  } as never)
+  })
 
   if (error || !document) {
     await supabase.storage.from(BUCKET).remove([storagePath])
@@ -122,10 +122,10 @@ export async function retireDocument(documentId: string): Promise<MeetingDocumen
 
   const { data, error } = await supabase.rpc('retire_meeting_document', {
     p_document_id: documentId,
-  } as never)
+  })
 
   if (error) throw error
-  return data as unknown as MeetingDocument
+  return data
 }
 
 /** Every version of one document, newest first, for the history panel. */

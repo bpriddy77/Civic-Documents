@@ -79,7 +79,13 @@ function decode(bytes: Uint8Array): string {
 }
 
 async function sha256(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  // TypeScript 5.7 made typed arrays generic over their buffer, and a
+  // Uint8Array<ArrayBufferLike> may be backed by a SharedArrayBuffer, which
+  // crypto.subtle will not accept. Copying into a fresh, definitely-unshared
+  // buffer satisfies the checker and costs one allocation per upload.
+  const view = new Uint8Array(bytes.byteLength)
+  view.set(bytes)
+  const digest = await crypto.subtle.digest('SHA-256', view.buffer)
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')

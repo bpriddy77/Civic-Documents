@@ -7,6 +7,11 @@ and what to enter.
 
 Budget about two hours the first time.
 
+> **Prefer not to install a toolchain?** [WEB-SETUP.md](WEB-SETUP.md) does the
+> whole database setup from the Supabase dashboard instead — three SQL files
+> pasted into the SQL Editor, no CLI and no Docker. Come back here when you
+> want the migration workflow for ongoing changes.
+
 ---
 
 ## Before you start

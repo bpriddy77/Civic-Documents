@@ -5,6 +5,23 @@ import { can } from '@/lib/permissions/permissions'
 import { formatMeetingWhen } from '@/lib/time/tenant-time'
 import { minutesStatusText } from '@/components/public/MinutesStatusBadge'
 import { MeetingRowActions } from '@/components/admin/MeetingRowActions'
+import type { MeetingStatus, MinutesStatus } from '@/lib/supabase/database.types'
+
+const MEETING_STATUSES = ['draft', 'published', 'archived'] as const
+const MINUTES_STATUSES = ['not_available', 'draft', 'pending_approval', 'approved'] as const
+
+/**
+ * Query-string values arrive as arbitrary strings. Narrowing them here means a
+ * hand-edited `?status=whatever` is ignored rather than sent to the database
+ * as a filter that matches nothing and looks like an empty archive.
+ */
+function asMeetingStatus(value: string | undefined): MeetingStatus | undefined {
+  return MEETING_STATUSES.find((status) => status === value)
+}
+
+function asMinutesStatus(value: string | undefined): MinutesStatus | undefined {
+  return MINUTES_STATUSES.find((status) => status === value)
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -32,8 +49,10 @@ export default async function AdminMeetingsPage({ searchParams }: { searchParams
     .eq('municipality_id', session.profile.municipality_id!)
 
   if (params.q) query = query.ilike('title', `%${params.q.replace(/[%,]/g, ' ')}%`)
-  if (params.status) query = query.eq('status', params.status)
-  if (params.minutes_status) query = query.eq('minutes_status', params.minutes_status)
+  const status = asMeetingStatus(params.status)
+  const minutesStatus = asMinutesStatus(params.minutes_status)
+  if (status) query = query.eq('status', status)
+  if (minutesStatus) query = query.eq('minutes_status', minutesStatus)
   if (params.category) query = query.eq('category_id', params.category)
   if (params.year) {
     query = query.gte('meeting_date', `${params.year}-01-01`).lte('meeting_date', `${params.year}-12-31`)

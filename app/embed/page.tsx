@@ -57,6 +57,13 @@ export default async function EmbedPage({
       />
 
       <p className="mt-8 text-sm">
+        {/*
+          A plain anchor with target="_top", not next/link, and deliberately so:
+          this page is rendered inside an iframe on the municipality's site, and
+          a client-side navigation would load the full archive *within* that
+          frame at its fixed height. This has to break out to the top window.
+        */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/meetings" target="_top">
           Open the full searchable archive
         </a>

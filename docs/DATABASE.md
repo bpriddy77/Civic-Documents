@@ -192,3 +192,24 @@ supabase db reset
 Replays every migration into an empty database, then applies `seed.sql`
 locally. If that succeeds and the tests pass, the repository can recreate the
 database — which is the same guarantee a restore depends on.
+
+---
+
+## About `lib/supabase/database.types.ts`
+
+The types are hand-written so the repository builds without a database
+connection. Two constraints are easy to violate by accident, and both fail in
+the same confusing way — every query's row type becomes `never`, and the build
+reports "Property 'x' does not exist on type 'never'" in an arbitrary file:
+
+1. **Every row type must be a `type` alias, not an `interface`.** postgrest-js constrains rows to `Record<string, unknown>`, and a TypeScript interface has no implicit index signature, so it silently fails that constraint.
+2. **Every table and view must declare `Relationships`.** Omit it and the schema no longer satisfies `GenericSchema`.
+
+To regenerate from a live database instead, which handles both automatically:
+
+```bash
+npm run db:types
+```
+
+Then re-check that the RPCs under `Functions` still carry accurate argument
+types, since a generated file will overwrite the hand-written comments there.

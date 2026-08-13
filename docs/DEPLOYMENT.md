@@ -104,3 +104,31 @@ Code: redeploy the previous build from the host's dashboard.
 Database: **do not** roll a migration back casually. Write a new forward
 migration that reverses the change, test it with `supabase db reset`, and push
 it. See [BACKUP-RESTORE.md](BACKUP-RESTORE.md) for genuine recovery.
+
+---
+
+## Supabase client version pinning
+
+`@supabase/ssr` and `@supabase/supabase-js` must be upgraded together.
+
+`ssr` forwards generic type parameters positionally to `supabase-js`. When
+`supabase-js` v2.112 added a client-options parameter, older `ssr` releases
+began passing the schema into the wrong slot. The schema then resolves to
+`never`, and every query in the codebase infers its row type as `never`.
+
+The failure is silent at runtime and appears only during `next build`, as:
+
+```
+Type error: Property 'id' does not exist on type 'never'.
+```
+
+pointing at whichever file the type checker happens to reach first — usually
+something unrelated to the actual cause. If you see that error after a
+dependency bump, check these two versions before changing any application code.
+
+Known-good pairing, and the one this repository pins:
+
+| Package | Version |
+| --- | --- |
+| `@supabase/ssr` | `^0.12.4` |
+| `@supabase/supabase-js` | `^2.45.4` (resolves to 2.112+) |
