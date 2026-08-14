@@ -15,6 +15,20 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.7.1] - 2026-08-14
+
+**No database changes.**
+
+### Fixed
+
+- **The public archive declared three different names for itself.** The `<h1>` used the configured archive heading, but the site-wide title template appended the city name (`Meeting Agendas and Minutes | City of Forsan, TX`) and `og:site_name` was the city name alone.
+
+  Google's OAuth branding review compares the configured app name against the name the home page declares, and machine-readable metadata is the obvious place to look. All three are now pinned to the archive heading on that page, and `application-name` is set to match. The city name still appears in the eyebrow above the heading and throughout the footer.
+
+- The layout's fallback title still contained a literal ampersand, which would have reappeared for any municipality that never set an archive heading.
+
+---
+
 ## [1.7.0] - 2026-08-14
 
 **No database changes.**

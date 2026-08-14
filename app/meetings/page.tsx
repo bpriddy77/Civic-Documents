@@ -18,9 +18,24 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const municipality = await getMunicipalityBySlug(asString(params.municipality))
   const config = tenantConfig(municipality)
   return {
-    title: config.archive_heading,
+    // `absolute` suppresses the site-wide "| <city>" suffix on this one page.
+    //
+    // This page is the application home page declared to Google's OAuth
+    // consent screen, and Google's branding review compares the configured
+    // app name against the name the page declares. When the title, the
+    // og:site_name, and the H1 disagree, that check fails — so all three are
+    // pinned to the same string here. The city name is still on the page, in
+    // the eyebrow above the heading and throughout the footer.
+    title: { absolute: config.archive_heading },
     description: `Search agendas and minutes for ${municipality.name} public meetings, including upcoming meetings and the historical archive.`,
     alternates: { canonical: '/meetings' },
+    applicationName: config.archive_heading,
+    openGraph: {
+      title: config.archive_heading,
+      siteName: config.archive_heading,
+      type: 'website',
+      url: '/meetings',
+    },
   }
 }
 
