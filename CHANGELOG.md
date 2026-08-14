@@ -15,6 +15,20 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.7.2] - 2026-08-14
+
+**No database changes.**
+
+### Changed
+
+- **Public API cache shortened** from `s-maxage=300, stale-while-revalidate=600` to `s-maxage=60, stale-while-revalidate=120`, and the browser cache from 60 seconds to zero.
+
+  A newly published meeting could previously take up to 15 minutes to appear in the embedded widget. The server-rendered archive revalidates every 60 seconds, so the two surfaces disagreed with each other — the meeting was visible on the records site but missing from the city's own page, with nothing to indicate why.
+
+  A municipal archive serves very little traffic. Freshness is worth more than cache efficiency here.
+
+---
+
 ## [1.7.1] - 2026-08-14
 
 **No database changes.**
