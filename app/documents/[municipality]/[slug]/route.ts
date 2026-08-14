@@ -52,13 +52,14 @@ async function serve(request: Request, params: Params, method: 'GET' | 'HEAD') {
 
   if (!municipality) return missing()
 
-  const document = await findDocument(municipality.id, publicSlug)
-  if (!document) return missing()
+  const found = await findDocument(municipality.id, publicSlug)
+  if (!found) return missing()
 
+  const { document, isPublic } = found
   assertSafeStoragePath(document.storage_path, document.municipality_id)
 
   if (method === 'HEAD') {
-    return new NextResponse(null, { status: 200, headers: pdfHeaders(document) })
+    return new NextResponse(null, { status: 200, headers: pdfHeaders(document, isPublic) })
   }
 
   const admin = createAdminSupabase()
@@ -87,7 +88,7 @@ async function serve(request: Request, params: Params, method: 'GET' | 'HEAD') {
         return new NextResponse(buffer.slice(start, end + 1), {
           status: 206,
           headers: {
-            ...pdfHeaders(document),
+            ...pdfHeaders(document, isPublic),
             'Content-Range': `bytes ${start}-${end}/${buffer.byteLength}`,
             'Content-Length': String(end - start + 1),
           },
@@ -96,13 +97,13 @@ async function serve(request: Request, params: Params, method: 'GET' | 'HEAD') {
     }
   }
 
-  return new NextResponse(buffer, { status: 200, headers: pdfHeaders(document) })
+  return new NextResponse(buffer, { status: 200, headers: pdfHeaders(document, isPublic) })
 }
 
 async function findDocument(
   municipalityId: string,
   publicSlug: string,
-): Promise<MeetingDocument | null> {
+): Promise<{ document: MeetingDocument; isPublic: boolean } | null> {
   const anon = createAnonSupabase()
   const { data: publicDoc } = await anon
     .from('meeting_documents')
@@ -112,7 +113,7 @@ async function findDocument(
     .eq('active_version', true)
     .maybeSingle()
 
-  if (publicDoc) return publicDoc
+  if (publicDoc) return { document: publicDoc, isPublic: true }
 
   // Staff preview of a document attached to a meeting that is still a draft.
   const staff = await createServerSupabase()
@@ -127,19 +128,27 @@ async function findDocument(
     .eq('active_version', true)
     .maybeSingle()
 
-  return staffDoc ?? null
+  return staffDoc ? { document: staffDoc, isPublic: false } : null
 }
 
-function pdfHeaders(document: MeetingDocument): Record<string, string> {
+function pdfHeaders(document: MeetingDocument, isPublic: boolean): Record<string, string> {
   return {
     'Content-Type': 'application/pdf',
     'Content-Disposition': `inline; filename="${document.stored_filename.replace(/"/g, '')}"`,
     'Content-Length': String(document.file_size),
     'Accept-Ranges': 'bytes',
     'X-Content-Type-Options': 'nosniff',
-    // Public records change only when a clerk replaces them, and a replacement
-    // keeps this URL, so revalidation is cheap and staleness is bounded.
-    'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+    // A staff preview of an unpublished document must never be cached by a
+    // shared cache. The URL is the same one the document will have once it is
+    // published, so a cached copy would be served to anonymous visitors at
+    // that URL - leaking a draft agenda through the CDN even though RLS
+    // correctly refused it. Public records, by contrast, change only when a
+    // clerk replaces them, and a replacement keeps this URL, so revalidation
+    // is cheap and staleness is bounded.
+    'Cache-Control': isPublic
+      ? 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
+      : 'private, no-store, max-age=0, must-revalidate',
+    ...(isPublic ? {} : { Vary: 'Cookie' }),
     ETag: `"${document.sha256 ?? document.id}"`,
     'Last-Modified': new Date(document.created_at).toUTCString(),
   }

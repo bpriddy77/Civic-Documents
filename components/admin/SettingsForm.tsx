@@ -23,6 +23,8 @@ export function SettingsForm({
     contact_phone: municipality.contact_phone ?? '',
     archive_heading: config.archive_heading,
     archive_about: config.archive_about,
+    privacy_policy_url: config.privacy_policy_url,
+    terms_url: config.terms_url,
     meetings_per_page: String(config.meetings_per_page),
     default_sort: config.default_sort,
     time_format: config.time_format,
@@ -58,6 +60,8 @@ export function SettingsForm({
         configuration: {
           archive_heading: form.archive_heading,
           archive_about: form.archive_about,
+          privacy_policy_url: form.privacy_policy_url,
+          terms_url: form.terms_url,
           meetings_per_page: Number(form.meetings_per_page),
           default_sort: form.default_sort,
           time_format: form.time_format,
@@ -157,6 +161,24 @@ export function SettingsForm({
               Shown under the heading on the public archive. Explain what this site is, so a
               first-time visitor understands it is the city&rsquo;s official record.
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="privacy_policy_url" className="field-label">Privacy policy URL</label>
+            <input id="privacy_policy_url" type="url" className="field"
+                   value={form.privacy_policy_url}
+                   onChange={(e) => set('privacy_policy_url', e.target.value)}
+                   aria-describedby="privacy-help" />
+            <p id="privacy-help" className="mt-1 text-sm text-ink-muted">
+              Linked in the public footer. Required by Google if staff sign in with a Google
+              account.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="terms_url" className="field-label">Terms of use URL</label>
+            <input id="terms_url" type="url" className="field" value={form.terms_url}
+                   onChange={(e) => set('terms_url', e.target.value)} />
           </div>
 
           <div>

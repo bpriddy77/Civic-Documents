@@ -15,6 +15,19 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.5.0] - 2026-08-13
+
+**No database changes.** The two new settings live in the existing
+`configuration` JSON column and default to empty.
+
+### Added
+
+- **Privacy policy and Terms of use links** in the public footer, set at Admin → Settings. Google's OAuth branding review requires the application home page to link to the privacy policy, with the link matching the consent screen configuration.
+- **A plain statement of what staff sign-in collects**, in the public footer: that no account is needed to read anything, and that when Google is used the site receives only the name and email address on that account, used solely to identify who made each change. Google requires the home page to explain the purpose for which user data is requested; a citizen also deserves to know that reading public records is not tracked.
+- `docs/GOOGLE-SIGN-IN.md` now documents the branding-verification requirements, including the two that are easy to miss.
+
+---
+
 ## [1.4.1] - 2026-08-13
 
 **Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`

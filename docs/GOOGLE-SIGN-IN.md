@@ -37,6 +37,27 @@ Two consequences worth internalising:
 
 ---
 
+## Branding verification
+
+Google reviews the application home page before it will show your app name and
+logo on the consent screen. Its published requirements are specific, and two
+are easy to miss:
+
+- The home page must **link to the privacy policy**, and that link must match the one on the consent screen configuration.
+- The home page must **explain why the app requests user data**, not merely what the app does.
+
+Both are satisfied out of the box from v1.5.0: set **Privacy policy URL** and
+**Terms of use URL** at Admin → Settings, and the public footer renders the
+links along with a plain statement of what Google sign-in collects and why.
+
+Also required, and worth checking before submitting:
+
+- The app name on the consent screen must **match the heading on the home page** exactly. Both are editable — the heading at Admin → Settings, the app name in Google Cloud → Branding — so change them together.
+- The home page must be reachable **without signing in**, must not redirect to another domain, and must be on a domain verified to you in Google Search Console.
+
+Verification is not required for sign-in to work. It governs whether your app
+name and logo display rather than the underlying Supabase project reference.
+
 ## Setup
 
 ### 1. Create the Google OAuth client

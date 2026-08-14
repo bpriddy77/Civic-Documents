@@ -132,6 +132,30 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
             Need a document in an alternative format? Contact the city clerk&rsquo;s office and it
             will be provided.
           </p>
+
+          {/*
+            Reading these records requires no account and collects nothing. This
+            paragraph describes the staff sign-in only, and is stated plainly
+            because a citizen should not have to wonder whether visiting a
+            public records page is tracked.
+          */}
+          <p className="mt-2">
+            No account is needed to read anything on this site. City staff sign in to publish and
+            maintain these records, using either an email address and password or a Google
+            account. When Google is used, this site receives only the name and email address on
+            that account, and uses them solely to identify which staff member made each change.
+          </p>
+
+          {(config.privacy_policy_url || config.terms_url) && (
+            <p className="mt-2">
+              {config.privacy_policy_url && (
+                <a href={config.privacy_policy_url}>Privacy policy</a>
+              )}
+              {config.privacy_policy_url && config.terms_url && ' · '}
+              {config.terms_url && <a href={config.terms_url}>Terms of use</a>}
+            </p>
+          )}
+
           <VendorFooter className="mt-4 border-t border-rule pt-4" />
         </div>
       </footer>
