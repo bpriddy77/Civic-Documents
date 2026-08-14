@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-08-14T19:39:09.061Z",
+  "supabase_url": "https://tfpclwkintfcuendkmpd.supabase.co",
+  "table_row_counts": {
+    "municipalities": 1,
+    "profiles": 2,
+    "meeting_categories": 8,
+    "meetings": 4,
+    "meeting_documents": 2,
+    "document_types": 2,
+    "role_permissions": 28,
+    "audit_log": 32
+  },
+  "document_count": 2,
+  "total_document_bytes": 9328,
+  "problems": [],
+  "documents": [
+    {
+      "id": "c022f7e8-e8bc-40b9-8084-a4600edc17ae",
+      "storage_path": "municipalities/bd7f4e8f-12dd-4029-9bdc-4a6dc839da57/meetings/b54e482b-cc7f-4e59-8437-29a6cec1f5e6/agendas/v1-c0bb9411-0112-44fc-ad28-2b6bda78b75c.pdf",
+      "original_filename": "test-agenda-2025-09-09.pdf",
+      "version": 1,
+      "active_version": true,
+      "bytes": 4482,
+      "sha256": "869054804ca69a012f921a0dc85762ec9201bc02796a5009be0f309746e8ca2b",
+      "sha256_matches_database": true
+    },
+    {
+      "id": "8206b069-45c7-4aef-95b5-289d09b568a6",
+      "storage_path": "municipalities/bd7f4e8f-12dd-4029-9bdc-4a6dc839da57/meetings/b54e482b-cc7f-4e59-8437-29a6cec1f5e6/minutes/v1-3e3f34a2-a1fd-43c7-a9e6-a9ca6443512d.pdf",
+      "original_filename": "test-minutes-2025-09-09.pdf",
+      "version": 1,
+      "active_version": true,
+      "bytes": 4846,
+      "sha256": "1b325cec109ea4ece324c6d5f35db1385e4f867c55d76421c30b923d7406e620",
+      "sha256_matches_database": true
+    }
+  ]
+}

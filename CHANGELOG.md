@@ -15,7 +15,20 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
-## [1.7.2] - 2026-08-14
+## [1.8.0] - 2026-08-14
+
+**No database changes.**
+
+### Added
+
+- **Automatic weekly backups** via `.github/workflows/backup.yml`. Runs the full backup every Monday, keeps the archive as a workflow artifact for 90 days, and can be triggered on demand before a migration. A failed checksum or missing document fails the run, so GitHub emails the repository owner rather than the problem going unnoticed.
+- **`scripts/upload-drive.mjs`** — copies a backup into a Google Drive folder using a service account. No SDK: it signs its own JWT with `node:crypto` and calls the REST API directly, keeping the dependency surface small. Supports `--keep N` to prune older archives, off by default.
+- Setup instructions for both in `docs/BACKUP-RESTORE.md`, including why the target must be a Shared Drive rather than a folder in My Drive — service accounts have no storage quota of their own, and a Shared Drive outlives the person who set it up.
+
+### Notes
+
+The Drive step is skipped when its secrets are absent, so the workflow is
+useful immediately and Drive can be added later.
 
 **No database changes.**
 

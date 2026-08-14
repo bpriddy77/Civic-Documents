@@ -1,0 +1,42 @@
+[
+  {
+    "id": "c022f7e8-e8bc-40b9-8084-a4600edc17ae",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "meeting_id": "b54e482b-cc7f-4e59-8437-29a6cec1f5e6",
+    "document_type": "agenda",
+    "posted_date": "2026-08-13",
+    "storage_path": "municipalities/bd7f4e8f-12dd-4029-9bdc-4a6dc839da57/meetings/b54e482b-cc7f-4e59-8437-29a6cec1f5e6/agendas/v1-c0bb9411-0112-44fc-ad28-2b6bda78b75c.pdf",
+    "public_slug": "2026-08-11-city-council-regular-meeting-agenda",
+    "original_filename": "test-agenda-2025-09-09.pdf",
+    "stored_filename": "test-agenda-2025-09-09.pdf",
+    "mime_type": "application/pdf",
+    "file_size": 4482,
+    "sha256": "869054804ca69a012f921a0dc85762ec9201bc02796a5009be0f309746e8ca2b",
+    "version": 1,
+    "active_version": true,
+    "uploaded_by": "a6544878-434d-4209-8ddb-6243863c0827",
+    "created_at": "2026-08-13T23:13:56.753645+00:00",
+    "replaced_at": null,
+    "removed_at": null
+  },
+  {
+    "id": "8206b069-45c7-4aef-95b5-289d09b568a6",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "meeting_id": "b54e482b-cc7f-4e59-8437-29a6cec1f5e6",
+    "document_type": "minutes",
+    "posted_date": "2026-08-13",
+    "storage_path": "municipalities/bd7f4e8f-12dd-4029-9bdc-4a6dc839da57/meetings/b54e482b-cc7f-4e59-8437-29a6cec1f5e6/minutes/v1-3e3f34a2-a1fd-43c7-a9e6-a9ca6443512d.pdf",
+    "public_slug": "2026-08-11-city-council-regular-meeting-minutes",
+    "original_filename": "test-minutes-2025-09-09.pdf",
+    "stored_filename": "test-minutes-2025-09-09.pdf",
+    "mime_type": "application/pdf",
+    "file_size": 4846,
+    "sha256": "1b325cec109ea4ece324c6d5f35db1385e4f867c55d76421c30b923d7406e620",
+    "version": 1,
+    "active_version": true,
+    "uploaded_by": "a6544878-434d-4209-8ddb-6243863c0827",
+    "created_at": "2026-08-13T23:25:26.610651+00:00",
+    "replaced_at": null,
+    "removed_at": null
+  }
+]

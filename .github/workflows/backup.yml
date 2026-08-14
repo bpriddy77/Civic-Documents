@@ -1,0 +1,92 @@
+name: Weekly backup
+
+# Backs up the database and every PDF, then stores the result off-platform.
+#
+# Runs on a schedule so it does not depend on anyone remembering. Also
+# runnable on demand from the Actions tab (Run workflow) — useful before a
+# migration or any other change you might want to undo.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#
+#   SUPABASE_URL                 https://<ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    Supabase -> Project Settings -> API
+#
+# Optional, to copy each backup into Google Drive:
+#
+#   GOOGLE_SERVICE_ACCOUNT_JSON  The whole service account key file
+#   GOOGLE_DRIVE_FOLDER_ID       ID of a Shared Drive folder
+#
+# Without the Google secrets the workflow still runs and still keeps the
+# backup as a workflow artifact — it simply skips the Drive step.
+
+on:
+  schedule:
+    # 08:00 UTC every Monday — early morning US Central, well clear of any
+    # meeting-night activity.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Back up records and documents
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backup
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run backup -- --out backups
+
+      # A failed checksum or a missing document exits non-zero above, so the
+      # workflow fails and GitHub emails whoever owns the repository. That
+      # notification is the point: a backup nobody checks is a hypothesis.
+
+      - name: Package it
+        id: package
+        run: |
+          FOLDER=$(ls -d backups/*/ | head -1)
+          NAME=$(basename "$FOLDER")
+          cd backups && zip -rq "../$NAME.zip" "$NAME"
+          cd .. && echo "archive=$NAME.zip" >> "$GITHUB_OUTPUT"
+          echo "Packaged $NAME.zip ($(du -h "$NAME.zip" | cut -f1))"
+
+      - name: Keep as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.archive }}
+          path: ${{ steps.package.outputs.archive }}
+          retention-days: 90
+
+      - name: Copy to Google Drive
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT_JSON != '' }}
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: node scripts/upload-drive.mjs "${{ steps.package.outputs.archive }}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Backup"
+            echo ""
+            if [ -f "${{ steps.package.outputs.archive }}" ]; then
+              echo "Archive: \`${{ steps.package.outputs.archive }}\`"
+              echo ""
+              echo "Download it from the Artifacts section of this run."
+            else
+              echo "No archive was produced. Check the log above."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

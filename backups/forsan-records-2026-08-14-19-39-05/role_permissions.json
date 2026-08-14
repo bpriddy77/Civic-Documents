@@ -1,0 +1,114 @@
+[
+  {
+    "role": "admin",
+    "permission": "meeting.read"
+  },
+  {
+    "role": "admin",
+    "permission": "meeting.create"
+  },
+  {
+    "role": "admin",
+    "permission": "meeting.update"
+  },
+  {
+    "role": "admin",
+    "permission": "meeting.publish"
+  },
+  {
+    "role": "admin",
+    "permission": "meeting.archive"
+  },
+  {
+    "role": "admin",
+    "permission": "meeting.delete"
+  },
+  {
+    "role": "admin",
+    "permission": "document.read"
+  },
+  {
+    "role": "admin",
+    "permission": "document.manage"
+  },
+  {
+    "role": "admin",
+    "permission": "document.delete"
+  },
+  {
+    "role": "admin",
+    "permission": "category.read"
+  },
+  {
+    "role": "admin",
+    "permission": "category.manage"
+  },
+  {
+    "role": "admin",
+    "permission": "category.delete"
+  },
+  {
+    "role": "admin",
+    "permission": "user.read"
+  },
+  {
+    "role": "admin",
+    "permission": "user.manage"
+  },
+  {
+    "role": "admin",
+    "permission": "audit.read"
+  },
+  {
+    "role": "admin",
+    "permission": "municipality.update"
+  },
+  {
+    "role": "editor",
+    "permission": "meeting.read"
+  },
+  {
+    "role": "editor",
+    "permission": "meeting.create"
+  },
+  {
+    "role": "editor",
+    "permission": "meeting.update"
+  },
+  {
+    "role": "editor",
+    "permission": "meeting.publish"
+  },
+  {
+    "role": "editor",
+    "permission": "document.read"
+  },
+  {
+    "role": "editor",
+    "permission": "document.manage"
+  },
+  {
+    "role": "editor",
+    "permission": "category.read"
+  },
+  {
+    "role": "editor",
+    "permission": "audit.read"
+  },
+  {
+    "role": "read_only",
+    "permission": "meeting.read"
+  },
+  {
+    "role": "read_only",
+    "permission": "document.read"
+  },
+  {
+    "role": "read_only",
+    "permission": "category.read"
+  },
+  {
+    "role": "read_only",
+    "permission": "audit.read"
+  }
+]

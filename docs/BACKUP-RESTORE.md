@@ -77,7 +77,80 @@ Three things it does that a plain file copy does not:
 Open `MANIFEST.json` and look at `problems`. An empty list means every document
 downloaded and every checksum matched.
 
-### Scheduling it
+### Automatic weekly backups
+
+`.github/workflows/backup.yml` runs the same command every Monday morning, with
+no machine involved. It can also be triggered on demand from the repository's
+**Actions** tab — worth doing before any migration or change you might want to
+undo.
+
+Add these under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `SUPABASE_URL` | `https://<ref>.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API |
+
+Each run keeps the archive as a workflow artifact for 90 days. If a checksum
+fails or a document is missing, the run fails and GitHub emails the repository
+owner — that notification is the point, because a backup nobody checks is a
+hypothesis.
+
+### Copying each backup into Google Drive
+
+Optional, and worth doing: workflow artifacts expire after 90 days and live in
+the same GitHub account as the code.
+
+**1. Create a Shared Drive folder.** In Google Drive, create a **Shared
+drive** (not a folder in My Drive) named something like *City of Forsan —
+Records Backups*.
+
+This distinction matters. A service account has no storage quota of its own,
+so uploads into someone's My Drive fail once anything accumulates. Files in a
+Shared Drive count against the Workspace pool and survive the departure of
+whoever set this up — which matters for records that outlive staff.
+
+**2. Create a service account.** In the Google Cloud console, in any project
+you control: **IAM & Admin → Service Accounts → Create**. Name it
+`records-backup`. Skip the optional role grants. Then **Keys → Add key →
+Create new key → JSON** and download it.
+
+**3. Enable the Drive API** for that project: **APIs & Services → Library →
+Google Drive API → Enable**.
+
+**4. Share the folder with the service account.** Open the Shared drive,
+**Manage members**, and add the service account's email — it looks like
+`records-backup@<project>.iam.gserviceaccount.com` — as **Content manager**.
+
+**5. Get the folder ID.** Open the folder in Drive and take the last part of
+the URL: `https://drive.google.com/drive/folders/`**`1AbC...`**
+
+**6. Add two more repository secrets:**
+
+| Secret | Value |
+| --- | --- |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | The entire contents of the downloaded key file |
+| `GOOGLE_DRIVE_FOLDER_ID` | The ID from step 5 |
+
+The workflow skips the Drive step if these are absent, so nothing breaks if
+you set it up later.
+
+To upload manually:
+
+```bash
+export GOOGLE_SERVICE_ACCOUNT_JSON="$(cat ~/Downloads/records-backup-key.json)"
+export GOOGLE_DRIVE_FOLDER_ID=1AbC...
+node scripts/upload-drive.mjs backups/forsan-records-2026-08-14.zip
+```
+
+Add `--keep 12` to retain only the newest twelve and delete the rest. It is
+off by default: deleting backups on a schedule should be a deliberate choice.
+
+**Treat the key file like the service role key.** It grants write access to
+that Drive folder. It belongs in GitHub Secrets and nowhere else — never
+committed, never emailed.
+
+### Scheduling it yourself
 
 Weekly at minimum; nightly for an active clerk's office. On macOS or Linux,
 a cron entry that runs it and keeps the last 30:

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "a6544878-434d-4209-8ddb-6243863c0827",
+    "auth_user_id": "79a35eb0-9044-479d-a82d-28103280c051",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "display_name": "Britt Priddy",
+    "email": "bpriddy@gmail.com",
+    "role": "super_admin",
+    "active": true,
+    "disabled_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "d8ef585d-babf-4d64-86ef-beead4803dac",
+    "auth_user_id": "b266cc4f-279d-4228-ac15-866222125b32",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "display_name": "City Secretary",
+    "email": "cityofforsan@gmail.com",
+    "role": "admin",
+    "active": true,
+    "disabled_at": null,
+    "created_at": "2026-08-13T17:19:06.509846+00:00",
+    "updated_at": "2026-08-13T17:19:06.509846+00:00"
+  }
+]

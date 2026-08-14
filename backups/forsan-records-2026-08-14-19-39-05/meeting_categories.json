@@ -1,0 +1,98 @@
+[
+  {
+    "id": "5346bc33-80d3-47b4-a288-aa7067b9bdc2",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "City Council",
+    "slug": "city-council",
+    "description": null,
+    "display_order": 10,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "697422b8-cb42-42b2-8587-557ce9dcf529",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Planning & Zoning",
+    "slug": "planning-zoning",
+    "description": null,
+    "display_order": 20,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "acd979a8-b09b-4782-881c-111cbaf63ff4",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Economic Development",
+    "slug": "economic-development",
+    "description": null,
+    "display_order": 30,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "8f7aa536-1249-4a15-88ed-149a798fd51d",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Board of Adjustments",
+    "slug": "board-of-adjustments",
+    "description": null,
+    "display_order": 40,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "feb3ce41-2ecf-4a6b-9c07-7fbcf4e725ca",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Special Meeting",
+    "slug": "special-meeting",
+    "description": null,
+    "display_order": 50,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "1ca622a2-7be9-41b5-9057-7ee353f2e9eb",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Public Hearing",
+    "slug": "public-hearing",
+    "description": null,
+    "display_order": 60,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "2ea4d540-db8d-4ef6-bbf3-4a8fb4857321",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Workshop",
+    "slug": "workshop",
+    "description": null,
+    "display_order": 70,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  },
+  {
+    "id": "a676f9f4-2121-4862-81ee-32c39f0a683a",
+    "municipality_id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "Emergency Meeting",
+    "slug": "emergency-meeting",
+    "description": null,
+    "display_order": 80,
+    "active": true,
+    "archived_at": null,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-13T17:14:12.432806+00:00"
+  }
+]

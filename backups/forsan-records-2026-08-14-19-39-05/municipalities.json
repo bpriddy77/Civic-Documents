@@ -1,0 +1,30 @@
+[
+  {
+    "id": "bd7f4e8f-12dd-4029-9bdc-4a6dc839da57",
+    "name": "City of Forsan, TX",
+    "slug": "city-of-forsan",
+    "timezone": "America/Chicago",
+    "logo_url": "https://storage.googleapis.com/funnel-ai-production/image-generation/t0btguaKLiU9Vi6U0yN6/mirrored-BiAGisXvFX.png",
+    "website_url": "https://forsan.texas.gov",
+    "contact_email": "cityofforsan@gmail.com",
+    "contact_phone": null,
+    "contact_address": null,
+    "configuration": {
+      "terms_url": "https://forsan.texas.gov/terms-of-use",
+      "date_format": "MMMM d, yyyy",
+      "time_format": "h:mm a",
+      "default_sort": "newest",
+      "archive_about": "This is the official record of public meetings. Agendas are posted in advance of each meeting and minutes are posted once the governing body approves them. Every document here is a public record, free to read, download, and share. City staff sign in to publish and maintain these records; no account is needed to read them.",
+      "max_upload_mb": 25,
+      "show_location": true,
+      "archive_heading": "Meeting Agendas & Minutes",
+      "meetings_per_page": 20,
+      "show_meeting_time": true,
+      "privacy_policy_url": "https://forsan.texas.gov/privacy-policy",
+      "publish_pending_minutes": false
+    },
+    "active": true,
+    "created_at": "2026-08-13T17:14:12.432806+00:00",
+    "updated_at": "2026-08-14T01:08:47.001269+00:00"
+  }
+]
