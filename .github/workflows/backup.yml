@@ -74,7 +74,7 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: node scripts/upload-drive.mjs "${{ steps.package.outputs.archive }}"
+        run: node scripts/upload-drive.mjs "${{ steps.package.outputs.archive }}" --keep 104
 
       - name: Summary
         if: always()
