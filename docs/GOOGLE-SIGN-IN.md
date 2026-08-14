@@ -50,6 +50,23 @@ Both are satisfied out of the box from v1.5.0: set **Privacy policy URL** and
 **Terms of use URL** at Admin → Settings, and the public footer renders the
 links along with a plain statement of what Google sign-in collects and why.
 
+Google also requires the privacy policy itself to:
+
+- be **hosted on the same domain as the home page** — a city's main website on a different subdomain does not satisfy this;
+- be **linked from the home page**, with that link matching the consent screen configuration;
+- **disclose specifically how the app accesses, uses, stores, and shares Google user data.**
+
+A municipality's general website privacy policy meets none of these reliably: it
+lives elsewhere, and whoever wrote it was describing a different system. From
+v1.6.0 this application serves its own policy at `/privacy`, on the same domain
+as the archive, stating exactly what Google sign-in receives (the name and
+email address on the account, nothing else), what it is used for, how it is
+stored, and that it is never sold or shared. Point the consent screen's privacy
+policy link at `https://<your-domain>/privacy`.
+
+The city's own website policy remains linked alongside it, via Admin →
+Settings, since the two describe different things.
+
 Also required, and worth checking before submitting:
 
 - The app name on the consent screen must **match the heading on the home page** exactly. Both are editable — the heading at Admin → Settings, the app name in Google Cloud → Branding — so change them together.

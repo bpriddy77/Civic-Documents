@@ -170,8 +170,8 @@ export function SettingsForm({
                    onChange={(e) => set('privacy_policy_url', e.target.value)}
                    aria-describedby="privacy-help" />
             <p id="privacy-help" className="mt-1 text-sm text-ink-muted">
-              Linked in the public footer. Required by Google if staff sign in with a Google
-              account.
+              The city&rsquo;s own website privacy policy, linked in the footer alongside this
+              system&rsquo;s policy at /privacy. Optional.
             </p>
           </div>
 

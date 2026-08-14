@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { ArchiveFilters } from '@/components/public/ArchiveFilters'
+import Link from 'next/link'
 import { MeetingList } from '@/components/public/MeetingList'
 import { VendorFooter } from '@/components/VendorFooter'
 import { Pagination } from '@/components/public/Pagination'
@@ -146,15 +147,21 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
             that account, and uses them solely to identify which staff member made each change.
           </p>
 
-          {(config.privacy_policy_url || config.terms_url) && (
-            <p className="mt-2">
-              {config.privacy_policy_url && (
-                <a href={config.privacy_policy_url}>Privacy policy</a>
-              )}
-              {config.privacy_policy_url && config.terms_url && ' · '}
-              {config.terms_url && <a href={config.terms_url}>Terms of use</a>}
-            </p>
-          )}
+          <p className="mt-2">
+            <Link href="/privacy">Privacy policy</Link>
+            {config.privacy_policy_url && (
+              <>
+                {' · '}
+                <a href={config.privacy_policy_url}>City privacy policy</a>
+              </>
+            )}
+            {config.terms_url && (
+              <>
+                {' · '}
+                <a href={config.terms_url}>Terms of use</a>
+              </>
+            )}
+          </p>
 
           <VendorFooter className="mt-4 border-t border-rule pt-4" />
         </div>

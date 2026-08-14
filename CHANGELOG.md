@@ -15,6 +15,32 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.6.0] - 2026-08-13
+
+**No database changes.**
+
+### Added
+
+- **A privacy policy at `/privacy`**, served by the application on the same domain as the public archive. It states that reading records requires no account and collects nothing; that staff sign-in with Google receives only the name and email address on the account and nothing else; what those are used for; how they are stored; and that they are never sold or shared. It also covers the change history, retention, and how to ask questions.
+
+### Changed
+
+- The public footer links this policy first, with the city's own website privacy policy alongside it when set.
+- The Settings help text for **Privacy policy URL** now explains that the field is for the city's general website policy, not this system's.
+
+### Notes
+
+Google's OAuth branding review requires the privacy policy to be hosted on the
+domain that hosts the application home page, to be linked from that home page,
+and to disclose specifically how the app handles Google user data. A city's
+general website policy satisfies none of those reliably — it lives on a
+different host, and it was written about a different system.
+
+After deploying, set the consent screen's privacy policy link to
+`https://<your-domain>/privacy` so it matches the link in the footer.
+
+---
+
 ## [1.5.0] - 2026-08-13
 
 **No database changes.** The two new settings live in the existing
