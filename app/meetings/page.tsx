@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { ArchiveFilters } from '@/components/public/ArchiveFilters'
+import Link from 'next/link'
 import { MeetingList } from '@/components/public/MeetingList'
 import { VendorFooter } from '@/components/VendorFooter'
 import { Pagination } from '@/components/public/Pagination'
@@ -59,10 +60,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
         <div className="mx-auto max-w-5xl px-4 py-8">
           <p className="eyebrow">{municipality.name}</p>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">{config.archive_heading}</h1>
-          <p className="mt-3 max-w-prose text-ink-muted">
-            Agendas are posted in advance of each meeting. Minutes are posted after the governing
-            body approves them. All documents open as PDF files.
-          </p>
+          <p className="mt-3 max-w-prose text-ink-muted">{config.archive_about}</p>
         </div>
       </header>
 
@@ -135,6 +133,36 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Sea
             Need a document in an alternative format? Contact the city clerk&rsquo;s office and it
             will be provided.
           </p>
+
+          {/*
+            Reading these records requires no account and collects nothing. This
+            paragraph describes the staff sign-in only, and is stated plainly
+            because a citizen should not have to wonder whether visiting a
+            public records page is tracked.
+          */}
+          <p className="mt-2">
+            No account is needed to read anything on this site. City staff sign in to publish and
+            maintain these records, using either an email address and password or a Google
+            account. When Google is used, this site receives only the name and email address on
+            that account, and uses them solely to identify which staff member made each change.
+          </p>
+
+          <p className="mt-2">
+            <Link href="/privacy">Privacy policy</Link>
+            {config.privacy_policy_url && (
+              <>
+                {' · '}
+                <a href={config.privacy_policy_url}>City privacy policy</a>
+              </>
+            )}
+            {config.terms_url && (
+              <>
+                {' · '}
+                <a href={config.terms_url}>Terms of use</a>
+              </>
+            )}
+          </p>
+
           <VendorFooter className="mt-4 border-t border-rule pt-4" />
         </div>
       </footer>

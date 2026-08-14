@@ -21,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .limit(5000)
 
   return [
+    {
+      url: `${siteUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly' as const,
+      priority: 0.3,
+    },
     { url: `${siteUrl}/meetings`, changeFrequency: 'daily', priority: 1 },
     ...(data ?? []).map((m) => ({
       url: `${siteUrl}${meetingPath(m)}`,

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    name: Type check, lint, test, build
+    runs-on: ubuntu-latest
+    env:
+      # Placeholder values: the build only needs these to parse, and nothing
+      # here can reach a real project.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-placeholder-anon-key
+      NEXT_PUBLIC_SITE_URL: https://example.test
+      NEXT_PUBLIC_DEFAULT_MUNICIPALITY: city-of-example
+      SUPABASE_SERVICE_ROLE_KEY: build-time-placeholder-service-key
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  migrations:
+    name: Validate database migrations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Applies every migration to a throwaway database, so a migration that
+      # cannot be replayed from scratch fails here rather than in production.
+      - run: supabase db start
+      - run: supabase db reset --debug
+      - name: Confirm no drift between migrations and the resulting schema
+        run: supabase db diff --schema public --linked=false | tee diff.sql && test ! -s diff.sql

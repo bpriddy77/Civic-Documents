@@ -64,6 +64,14 @@ export const municipalityConfigurationSchema = z.object({
   meetings_per_page: z.coerce.number().int().min(5).max(100).default(20),
   default_sort: z.enum(['newest', 'oldest']).default('newest'),
   archive_heading: z.string().max(160).default('Meeting Agendas & Minutes'),
+  archive_about: z
+    .string()
+    .max(600)
+    .default(
+      'This is the official record of public meetings. Agendas are posted in advance of each meeting and minutes are posted once the governing body approves them. Every document here is a public record, free to read, download, and share. City staff sign in to publish and maintain these records; no account is needed to read them.',
+    ),
+  privacy_policy_url: z.string().default(''),
+  terms_url: z.string().default(''),
   show_meeting_time: z.boolean().default(true),
   show_location: z.boolean().default(true),
   publish_pending_minutes: z.boolean().default(false),

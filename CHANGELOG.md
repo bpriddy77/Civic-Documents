@@ -15,6 +15,110 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.7.0] - 2026-08-14
+
+**No database changes.**
+
+### Added
+
+- **`npm run backup`** — captures the database and the PDFs together, in one command, with no Supabase CLI and no Docker. Writes a dated, self-contained folder: one JSON file per table, every document in its exact storage path, and a manifest.
+
+  It verifies as it goes: each PDF is checked against the SHA-256 recorded at upload, missing or corrupted files are listed in the manifest, and the command exits non-zero so a scheduled run fails loudly instead of producing a quietly incomplete backup. Superseded document versions are included, since an accidental replacement is only recoverable if the file it replaced was kept.
+
+### Changed
+
+- `docs/BACKUP-RESTORE.md` replaces the CLI-based storage backup with the above, and adds a full rebuild-from-scratch restore procedure — including recreating auth logins, which live outside the application schema and are not in any backup.
+
+### Notes
+
+Supabase's automatic database backups do not include Storage objects.
+Restoring the database alone yields a complete, correct index of documents
+that no longer exist — which is worse than an obvious failure, because
+everything looks fine until someone clicks a link. This closes that gap.
+
+---
+
+## [1.6.0] - 2026-08-13
+
+**No database changes.**
+
+### Added
+
+- **A privacy policy at `/privacy`**, served by the application on the same domain as the public archive. It states that reading records requires no account and collects nothing; that staff sign-in with Google receives only the name and email address on the account and nothing else; what those are used for; how they are stored; and that they are never sold or shared. It also covers the change history, retention, and how to ask questions.
+
+### Changed
+
+- The public footer links this policy first, with the city's own website privacy policy alongside it when set.
+- The Settings help text for **Privacy policy URL** now explains that the field is for the city's general website policy, not this system's.
+
+### Notes
+
+Google's OAuth branding review requires the privacy policy to be hosted on the
+domain that hosts the application home page, to be linked from that home page,
+and to disclose specifically how the app handles Google user data. A city's
+general website policy satisfies none of those reliably — it lives on a
+different host, and it was written about a different system.
+
+After deploying, set the consent screen's privacy policy link to
+`https://<your-domain>/privacy` so it matches the link in the footer.
+
+---
+
+## [1.5.0] - 2026-08-13
+
+**No database changes.** The two new settings live in the existing
+`configuration` JSON column and default to empty.
+
+### Added
+
+- **Privacy policy and Terms of use links** in the public footer, set at Admin → Settings. Google's OAuth branding review requires the application home page to link to the privacy policy, with the link matching the consent screen configuration.
+- **A plain statement of what staff sign-in collects**, in the public footer: that no account is needed to read anything, and that when Google is used the site receives only the name and email address on that account, used solely to identify who made each change. Google requires the home page to explain the purpose for which user data is requested; a citizen also deserves to know that reading public records is not tracked.
+- `docs/GOOGLE-SIGN-IN.md` now documents the branding-verification requirements, including the two that are easy to miss.
+
+---
+
+## [1.4.1] - 2026-08-13
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. It is idempotent and safe to paste over an existing install.
+
+### Fixed
+
+- **Uploading minutes failed with "The document could not be recorded against this meeting."** In PostgreSQL, `text[] || 'literal'` is ambiguous: it resolves to `array || array` and then fails with *malformed array literal*. Five places in `audit_row_change()` appended an audit action that way, so **every status transition that wrote an audit entry was broken** — publishing, archiving, restoring, minutes-status changes, role changes, and enabling or disabling an account.
+
+  The minutes upload surfaced it because that path fires a trigger that updates the meeting, three calls deep, and the resulting error reached the clerk as a generic save failure. Every appended action is now explicitly cast to `::text`, with a comment at the site so it is not reintroduced.
+
+### Added
+
+- `npm run validate:audit` — applies the schema to a real PostgreSQL engine, then exercises uploads, replacements, and every status transition as the `authenticated` role with RLS active, asserting each writes its audit entry. This bug was invisible to unit tests because it only appeared through trigger execution under a real engine.
+
+  It also asserts that document replacement preserves the public slug, and that an `admin` cannot promote anyone to `super_admin`.
+
+---
+
+## [1.4.0] - 2026-08-13
+
+**No database changes.** The new setting lives in the existing `configuration`
+JSON column and defaults sensibly, so nothing needs updating for existing
+municipalities.
+
+### Added
+
+- **`archive_about`** — a purpose statement shown under the heading on the public archive, editable at Admin → Settings → *About this archive*. Defaults to text explaining that the site is the city's official record of public meetings, that everything on it is free to read and share, and that no account is needed to read it.
+
+### Changed
+
+- The public archive's introductory paragraph now comes from that setting rather than being fixed in code. The previous text described the documents; the new default describes the system, which is what a first-time visitor needs.
+
+### Notes
+
+Written partly because Google's OAuth branding review requires an application
+home page that explains the app's purpose. It is worth having regardless — a
+citizen landing on a bare list of meetings should not have to infer what the
+site is.
+
+---
+
 ## [1.3.1] - 2026-08-13
 
 **No database changes.**

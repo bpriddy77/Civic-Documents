@@ -20,6 +20,9 @@ export type MunicipalityConfiguration = {
   meetings_per_page?: number
   default_sort?: 'newest' | 'oldest'
   archive_heading?: string
+  archive_about?: string
+  privacy_policy_url?: string
+  terms_url?: string
   show_meeting_time?: boolean
   show_location?: boolean
   publish_pending_minutes?: boolean

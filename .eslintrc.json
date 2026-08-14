@@ -1,0 +1,8 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "jsx-a11y/anchor-is-valid": "error",
+    "jsx-a11y/alt-text": "error",
+    "@typescript-eslint/no-explicit-any": "warn"
+  }
+}
