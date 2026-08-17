@@ -21,6 +21,7 @@ export function SettingsForm({
     logo_url: municipality.logo_url ?? '',
     contact_email: municipality.contact_email ?? '',
     contact_phone: municipality.contact_phone ?? '',
+    default_meeting_location: config.default_meeting_location,
     archive_heading: config.archive_heading,
     archive_about: config.archive_about,
     privacy_policy_url: config.privacy_policy_url,
@@ -58,6 +59,7 @@ export function SettingsForm({
         contact_email: form.contact_email,
         contact_phone: form.contact_phone,
         configuration: {
+          default_meeting_location: form.default_meeting_location,
           archive_heading: form.archive_heading,
           archive_about: form.archive_about,
           privacy_policy_url: form.privacy_policy_url,
@@ -133,6 +135,25 @@ export function SettingsForm({
             <label htmlFor="contact_phone" className="field-label">Contact phone</label>
             <input id="contact_phone" className="field" value={form.contact_phone}
                    onChange={(e) => set('contact_phone', e.target.value)} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label htmlFor="default_meeting_location" className="field-label">
+              Default meeting location
+            </label>
+            <input
+              id="default_meeting_location"
+              className="field"
+              value={form.default_meeting_location}
+              onChange={(e) => set('default_meeting_location', e.target.value)}
+              aria-describedby="default-location-help"
+              placeholder="Forsan City Hall, 409 Ave D"
+            />
+            <p id="default-location-help" className="mt-1 text-sm text-ink-muted">
+              Fills in the location when a new meeting is created. It can be changed on any
+              meeting, so a special meeting held elsewhere is still easy to enter. Leave blank
+              if meetings do not have a usual place.
+            </p>
           </div>
         </div>
       </fieldset>

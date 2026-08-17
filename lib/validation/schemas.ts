@@ -72,6 +72,7 @@ export const municipalityConfigurationSchema = z.object({
     ),
   privacy_policy_url: z.string().default(''),
   terms_url: z.string().default(''),
+  default_meeting_location: z.string().max(200).default(''),
   show_meeting_time: z.boolean().default(true),
   show_location: z.boolean().default(true),
   publish_pending_minutes: z.boolean().default(false),

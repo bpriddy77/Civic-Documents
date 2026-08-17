@@ -23,7 +23,7 @@ export default async function NewMeetingPage() {
 
   const config = session.municipality
     ? tenantConfig(session.municipality)
-    : { show_meeting_time: true, show_location: true }
+    : { show_meeting_time: true, show_location: true, default_meeting_location: '' }
 
   return (
     <>
@@ -47,6 +47,7 @@ export default async function NewMeetingPage() {
           canArchive={can(session.profile.role, 'meeting.archive')}
           showTime={config.show_meeting_time !== false}
           showLocation={config.show_location !== false}
+          defaultLocation={config.default_meeting_location}
         />
       )}
     </>

@@ -14,6 +14,12 @@ interface Props {
   canArchive: boolean
   showTime: boolean
   showLocation: boolean
+  /**
+   * The municipality's usual meeting place, from Settings. Applied only when
+   * creating a meeting. Editing an existing one never overwrites what a clerk
+   * entered — including a location they deliberately cleared.
+   */
+  defaultLocation?: string
 }
 
 /**
@@ -24,7 +30,7 @@ interface Props {
  * their field with aria-describedby and summarised at the top, so a screen
  * reader user hears what failed without hunting for it.
  */
-export function MeetingForm({ categories, meeting, canPublish, canArchive, showTime, showLocation }: Props) {
+export function MeetingForm({ categories, meeting, canPublish, canArchive, showTime, showLocation, defaultLocation }: Props) {
   const router = useRouter()
   const editing = Boolean(meeting)
 
@@ -33,7 +39,7 @@ export function MeetingForm({ categories, meeting, canPublish, canArchive, showT
     category_id: meeting?.category_id ?? '',
     meeting_date: meeting?.meeting_date ?? '',
     meeting_time: meeting?.meeting_time?.slice(0, 5) ?? '',
-    location: meeting?.location ?? '',
+    location: meeting?.location ?? (editing ? '' : defaultLocation ?? ''),
     description: meeting?.description ?? '',
     status: meeting?.status ?? 'draft',
     minutes_status: meeting?.minutes_status ?? 'not_available',

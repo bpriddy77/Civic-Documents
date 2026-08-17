@@ -15,6 +15,23 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.8.1] - 2026-08-18
+
+**No database changes.** The new setting lives in the existing `configuration`
+JSON column and defaults to empty.
+
+### Added
+
+- **Default meeting location**, at Admin → Settings → Municipality, directly beneath Contact phone. It fills in the location field when a new meeting is created, so the usual meeting place does not have to be retyped every time.
+
+  It applies only on creation. Editing an existing meeting never overwrites the location a clerk entered — including one they deliberately cleared — and the field remains editable on every meeting, so a special meeting held elsewhere is still straightforward.
+
+### Changed
+
+- The weekly backup workflow now passes `--keep 52` when uploading to Google Drive, retaining one year of weekly archives and pruning older ones. These are disaster-recovery copies; the permanent public record lives in the archive itself and is never pruned by this.
+
+---
+
 ## [1.8.0] - 2026-08-14
 
 **No database changes.**
