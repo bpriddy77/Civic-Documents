@@ -23,6 +23,8 @@ export const PERMISSIONS = [
   'user.read',
   'user.manage',
   'audit.read',
+  'alert.read',
+  'alert.manage',
   'municipality.update',
   'tenant.manage',
 ] as const
@@ -35,15 +37,18 @@ const ADMIN: Permission[] = [
   'document.read', 'document.manage', 'document.delete',
   'category.read', 'category.manage', 'category.delete',
   'user.read', 'user.manage', 'audit.read', 'municipality.update',
+  'alert.read', 'alert.manage',
 ]
 
 const EDITOR: Permission[] = [
   'meeting.read', 'meeting.create', 'meeting.update', 'meeting.publish',
   'document.read', 'document.manage',
-  'category.read', 'audit.read',
+  'category.read', 'audit.read', 'alert.read',
 ]
 
-const READ_ONLY: Permission[] = ['meeting.read', 'document.read', 'category.read', 'audit.read']
+const READ_ONLY: Permission[] = [
+  'meeting.read', 'document.read', 'category.read', 'audit.read', 'alert.read',
+]
 
 export const ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   super_admin: PERMISSIONS,

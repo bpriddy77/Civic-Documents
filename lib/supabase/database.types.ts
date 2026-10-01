@@ -12,6 +12,24 @@
 export type AppRole = 'super_admin' | 'admin' | 'editor' | 'read_only'
 export type MeetingStatus = 'draft' | 'published' | 'archived'
 export type MinutesStatus = 'not_available' | 'draft' | 'pending_approval' | 'approved'
+export type AlertSeverity = 'emergency' | 'advisory' | 'information'
+
+export type Alert = {
+  id: string
+  municipality_id: string
+  message: string
+  severity: AlertSeverity
+  link_url: string | null
+  link_label: string | null
+  expires_at: string
+  published_at: string
+  published_by: string | null
+  cleared_at: string | null
+  cleared_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type DocumentType = 'agenda' | 'minutes' | (string & {})
 
 export type MunicipalityConfiguration = {
@@ -217,6 +235,7 @@ export type Database = {
         ]
       >
       audit_log: Table<AuditLogEntry, BelongsToMunicipality<'audit_log_municipality_id_fkey'>>
+      alerts: Table<Alert, BelongsToMunicipality<'alerts_municipality_id_fkey'>>
       role_permissions: Table<{ role: AppRole; permission: string }>
       document_types: Table<{ code: string; label: string; display_order: number; active: boolean }>
     }

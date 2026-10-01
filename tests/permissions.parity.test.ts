@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ROLE_PERMISSIONS, PERMISSIONS } from '@/lib/permissions/permissions'
@@ -10,10 +10,16 @@ import type { AppRole } from '@/lib/supabase/database.types'
  * starts lying to people - offering an action that will fail, or hiding one
  * that would have worked. This test reads the migration and compares.
  */
-const MIGRATION = readFileSync(
-  join(process.cwd(), 'supabase/migrations/20260101000600_reference_data.sql'),
-  'utf8',
-)
+// Every migration, not just the reference-data one. Permissions for a new
+// feature ship with that feature's migration, so reading a single file would
+// silently miss them — and this test exists precisely to catch what the
+// interface and the database disagree about.
+const MIGRATIONS_DIR = join(process.cwd(), 'supabase/migrations')
+const MIGRATION = readdirSync(MIGRATIONS_DIR)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .map((f) => readFileSync(join(MIGRATIONS_DIR, f), 'utf8'))
+  .join('\n')
 
 function permissionsFromMigration(): Record<string, Set<string>> {
   const matrix: Record<string, Set<string>> = {}

@@ -35,6 +35,7 @@ const TABLES = [
   'document_types',
   'role_permissions',
   'audit_log',
+  'alerts',
 ]
 
 function arg(name, fallback = null) {

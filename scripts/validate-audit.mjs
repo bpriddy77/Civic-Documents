@@ -168,6 +168,63 @@ await check('an admin cannot promote anyone to super_admin', async () => {
   return 'refused, as intended'
 })
 
+// ---------------------------------------------------------------- alerts
+// A separate feature. Exercised here because it shares the audit log and
+// the permission model, so a regression would show up in the same place.
+console.log('')
+
+await check('publish an emergency alert', async () => {
+  await db.query(
+    `insert into public.alerts (municipality_id, message, severity, expires_at, published_by)
+     values ($1, 'Boil water notice in effect for all residents.', 'emergency',
+             now() + interval '72 hours',
+             (select id from public.profiles where email = 'bpriddy@gmail.com'))`,
+    [muni.id])
+  return 'emergency, expires in 72h'
+})
+
+await check('only one live alert per municipality', async () => {
+  let refused = false
+  try {
+    await db.query(
+      `insert into public.alerts (municipality_id, message, expires_at)
+       values ($1, 'Second simultaneous alert', now() + interval '6 hours')`, [muni.id])
+  } catch { refused = true }
+  if (!refused) throw new Error('a second live alert was allowed')
+  return 'refused, as intended'
+})
+
+await check('expiry must be in the future', async () => {
+  let refused = false
+  try {
+    await db.query(
+      `insert into public.alerts (municipality_id, message, expires_at, published_at)
+       values ($1, 'Already expired', now() - interval '1 hour', now())`, [muni.id])
+  } catch { refused = true }
+  if (!refused) throw new Error('an already-expired alert was accepted')
+  return 'refused'
+})
+
+await check('clearing an alert frees the slot', async () => {
+  await db.query(
+    `update public.alerts set cleared_at = now(),
+       cleared_by = (select id from public.profiles where email = 'bpriddy@gmail.com')
+     where municipality_id = $1 and cleared_at is null`, [muni.id])
+  await db.query(
+    `insert into public.alerts (municipality_id, message, severity, expires_at)
+     values ($1, 'Road closure on West Main Street.', 'advisory', now() + interval '24 hours')`,
+    [muni.id])
+  return 'advisory posted after clearing'
+})
+
+await check('current_alert returns only the live one', async () => {
+  const { rows } = await db.query(
+    `select message, severity::text as severity from public.current_alert($1)`, [muni.id])
+  if (rows.length !== 1) throw new Error(`expected 1 live alert, got ${rows.length}`)
+  if (rows[0].severity !== 'advisory') throw new Error(`wrong alert: ${rows[0].severity}`)
+  return rows[0].severity
+})
+
 await db.exec(`reset role`)
 const { rows: audit } = await db.query(
   `select action, count(*)::int as n from public.audit_log group by action order by action`)

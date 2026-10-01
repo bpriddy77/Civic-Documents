@@ -117,3 +117,26 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   }
   return out
 }
+
+
+/**
+ * An emergency alert.
+ *
+ * Expiry is required and must be in the future. The failure that destroys
+ * trust in a banner is not a missing alert but a stale one — so there is no
+ * option to post something indefinitely.
+ */
+export const alertInputSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Enter the message residents should see.')
+    .max(500, 'Keep the message under 500 characters.'),
+  severity: z.enum(['emergency', 'advisory', 'information']).default('emergency'),
+  link_url: z.string().url('Enter a full web address, including https://').or(z.literal('')).optional(),
+  link_label: z.string().max(60).optional(),
+  expires_at: z
+    .string()
+    .refine((v) => !Number.isNaN(Date.parse(v)), 'Choose when this alert should stop showing.')
+    .refine((v) => Date.parse(v) > Date.now(), 'The expiry time must be in the future.'),
+})

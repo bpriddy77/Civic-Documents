@@ -15,6 +15,35 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.9.0] - 2026-09-10
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. It is idempotent and safe to paste over an existing install.
+
+**Nothing in this release changes meetings, documents, or the agendas widget.**
+The additions are a new table, new routes, a new admin page, and a new widget
+file. The meeting lifecycle was validated against `validate-audit.mjs` before
+and after the change and is byte-identical.
+
+### Added
+
+- **Emergency alerts.** A banner shown at the top of every page of the city's website — severe weather, unsafe water, a road closed by an accident. When no alert is posted the site looks completely normal and the widget renders nothing.
+
+  Three severity levels (Emergency, Advisory, Information), each with contrast-checked colours. **Expiry is mandatory** — 6 hours, 24 hours, 3 days or a week — because the failure that destroys trust in a banner is not a missing alert but a stale one. Clearing early is one button.
+
+  One live alert per municipality, enforced by a partial unique index rather than by application logic. Publishing and clearing are both written to the audit log, so "when did the city post the notice?" has an answer afterwards.
+
+- **`public/city-alert.js`** — the banner widget, one script tag in the site's global header. Scrolls only when the message is too long to fit, always offers a pause control, renders static under `prefers-reduced-motion` and on phones, and announces politely rather than interrupting a screen reader mid-sentence.
+
+- **`alert.manage` and `alert.read` permissions.** Administrators can post; editors and read-only accounts can see the history. Posting an emergency notice to a whole city is an administrative act, not an editorial one.
+
+### Changed
+
+- The permission parity test now reads **every** migration rather than only the reference-data file. Permissions for a new feature ship with that feature's migration, so the old test would have silently missed them — which it did, until it failed and was corrected.
+- The backup script includes the `alerts` table.
+
+---
+
 ## [1.8.1] - 2026-08-18
 
 **No database changes.** The new setting lives in the existing `configuration`

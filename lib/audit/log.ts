@@ -30,6 +30,9 @@ export async function logEvent(input: {
 }
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  'alert.published': 'Alert published',
+  'alert.cleared': 'Alert cleared',
+  'alert.updated': 'Alert updated',
   'meeting.created': 'Meeting created',
   'meeting.updated': 'Meeting edited',
   'meeting.published': 'Meeting published',
