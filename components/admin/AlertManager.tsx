@@ -45,7 +45,16 @@ function whenExpires(iso: string): string {
   return `in ${Math.round(hours / 24)} days`
 }
 
-export function AlertManager({ live, history }: { live: Alert | null; history: Alert[] }) {
+export function AlertManager({
+  live,
+  history,
+  canManage,
+}: {
+  live: Alert | null
+  history: Alert[]
+  /** Read-only accounts see the current alert and the history, but no controls. */
+  canManage: boolean
+}) {
   const router = useRouter()
   const [message, setMessage] = useState('')
   const [severity, setSeverity] = useState<AlertSeverity>('emergency')
@@ -119,9 +128,11 @@ export function AlertManager({ live, history }: { live: Alert | null; history: A
             {whenExpires(live.expires_at)}
           </p>
 
-          <button type="button" onClick={clear} disabled={busy} className="btn-danger mt-4">
-            {busy ? 'Clearing…' : 'Clear alert now'}
-          </button>
+          {canManage && (
+            <button type="button" onClick={clear} disabled={busy} className="btn-danger mt-4">
+              {busy ? 'Clearing…' : 'Clear alert now'}
+            </button>
+          )}
         </section>
       ) : (
         <section className="rounded border border-rule bg-paper px-4 py-6">
@@ -132,7 +143,7 @@ export function AlertManager({ live, history }: { live: Alert | null; history: A
         </section>
       )}
 
-      {!live && (
+      {!live && canManage && (
         <form onSubmit={publish} className="rounded border border-rule bg-paper p-4">
           <h2 className="font-display text-lg font-semibold">Post an alert</h2>
 

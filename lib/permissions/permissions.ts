@@ -43,7 +43,7 @@ const ADMIN: Permission[] = [
 const EDITOR: Permission[] = [
   'meeting.read', 'meeting.create', 'meeting.update', 'meeting.publish',
   'document.read', 'document.manage',
-  'category.read', 'audit.read', 'alert.read',
+  'category.read', 'audit.read', 'alert.read', 'alert.manage',
 ]
 
 const READ_ONLY: Permission[] = [

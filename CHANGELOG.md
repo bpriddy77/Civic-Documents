@@ -15,6 +15,20 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.9.1] - 2026-10-01
+
+**Requires a database update** — re-run `supabase/setup/01-complete-schema.sql`.
+
+### Changed
+
+- **Editors can now post and clear alerts.** In a large city this would sit with an administrator. In a city of a few hundred people the City Secretary holds the editor role and is the person actually at her desk when the water main breaks — requiring an administrator would mean the notice waits for someone who may be unreachable.
+
+### Fixed
+
+- The Alerts page showed the posting form to any account with `alert.read`, including read-only ones, which could then fill it in and be refused by the API. Controls are now gated on `alert.manage`, so an account that cannot post sees the current alert and the history without a form that will not work.
+
+---
+
 ## [1.9.0] - 2026-09-10
 
 **Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`

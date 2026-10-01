@@ -1,6 +1,7 @@
 import { requirePermission } from '@/lib/auth/session'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { AlertManager } from '@/components/admin/AlertManager'
+import { can } from '@/lib/permissions/permissions'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Alerts' }
@@ -29,7 +30,11 @@ export default async function AlertsPage() {
         an accident. When no alert is posted, the website looks completely normal.
       </p>
 
-      <AlertManager live={live} history={all.filter((a) => a.id !== live?.id)} />
+      <AlertManager
+        live={live}
+        history={all.filter((a) => a.id !== live?.id)}
+        canManage={can(session.profile.role, 'alert.manage')}
+      />
     </>
   )
 }

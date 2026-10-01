@@ -166,12 +166,17 @@ create policy alerts_delete on public.alerts
   using (public.may('alert.manage', municipality_id));
 
 -- ---------------------------------------------------------- permissions
--- Posting an emergency notice to the whole city is an administrative act,
--- not an editorial one. Editors who publish agendas do not get it by
--- default; an administrator can grant it per city if they want otherwise.
+-- Editors can post alerts.
+--
+-- In a large city, posting an emergency notice would sit with an
+-- administrator. In a city of a few hundred people the City Secretary is
+-- the person actually at her desk when the water main breaks, and she
+-- holds the editor role. Requiring an administrator would mean the
+-- notice waits for someone who may be unreachable.
 insert into public.role_permissions (role, permission) values
   ('admin', 'alert.manage'),
   ('admin', 'alert.read'),
+  ('editor', 'alert.manage'),
   ('editor', 'alert.read'),
   ('read_only', 'alert.read')
 on conflict do nothing;
