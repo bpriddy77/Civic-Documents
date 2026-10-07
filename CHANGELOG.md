@@ -15,6 +15,26 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.9.2] - 2026-10-07
+
+**No database changes.**
+
+### Fixed
+
+- **The scheduled backup failed after every release.** Both workflows pinned Node 20; `supabase-js` requires Node 22 or later for the native WebSocket API and throws at `createClient()` before any query runs.
+
+  This was fixed by hand in the repository once, but the fix was never applied to the source tree these releases are built from — so each new version silently reverted it, and the weekly backup broke again every time a release was pushed. The only symptom was a failure email.
+
+- The backup workflow regained the `npm ci || npm install` fallback, which had been lost the same way. Without it, a version bump committed without a refreshed lockfile fails a scheduled run that nobody is watching.
+
+### Added
+
+- **`tests/workflows.test.ts`** — asserts every workflow pins a Node version satisfying `package.json` engines, and that the backup workflow keeps its lockfile fallback and artifact upload. Verified by reintroducing the bug and confirming the test fails with a message naming the file and both versions.
+
+  A fix applied by hand in one place and lost in the next release is not really fixed. This makes the regression impossible to ship quietly.
+
+---
+
 ## [1.9.1] - 2026-10-01
 
 **Requires a database update** — re-run `supabase/setup/01-complete-schema.sql`.
