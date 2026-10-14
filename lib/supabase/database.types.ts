@@ -42,6 +42,10 @@ export type MunicipalityConfiguration = {
   privacy_policy_url?: string
   terms_url?: string
   default_meeting_location?: string
+  default_meeting_title?: string
+  default_meeting_time?: string
+  default_meeting_weekday?: number
+  default_category_slug?: string
   show_meeting_time?: boolean
   show_location?: boolean
   publish_pending_minutes?: boolean

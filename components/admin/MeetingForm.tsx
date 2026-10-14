@@ -7,6 +7,22 @@ import { StatusMessage } from '@/components/accessibility/StatusMessage'
 import { fieldErrors, meetingInputSchema } from '@/lib/validation/schemas'
 import type { Meeting, MeetingCategory } from '@/lib/supabase/database.types'
 
+/**
+ * Pre-filled values for a new meeting, from the municipality's Settings.
+ *
+ * Resolved on the server: `date` depends on the municipality's time zone, and
+ * the browser's own zone is not a safe substitute — a clerk travelling, or a
+ * laptop left on the wrong zone, would otherwise get a different date than
+ * the city's own calendar.
+ */
+export interface MeetingDefaults {
+  title: string
+  categoryId: string
+  date: string
+  time: string
+  location: string
+}
+
 interface Props {
   categories: Pick<MeetingCategory, 'id' | 'name'>[]
   meeting?: Meeting
@@ -15,11 +31,12 @@ interface Props {
   showTime: boolean
   showLocation: boolean
   /**
-   * The municipality's usual meeting place, from Settings. Applied only when
-   * creating a meeting. Editing an existing one never overwrites what a clerk
-   * entered — including a location they deliberately cleared.
+   * Applied only when creating. Editing an existing meeting never fills
+   * anything in, because a blank field on a saved meeting is a decision the
+   * clerk made — a cleared location, a meeting with no set time — and
+   * overwriting it would silently undo that.
    */
-  defaultLocation?: string
+  defaults?: MeetingDefaults
 }
 
 /**
@@ -30,16 +47,17 @@ interface Props {
  * their field with aria-describedby and summarised at the top, so a screen
  * reader user hears what failed without hunting for it.
  */
-export function MeetingForm({ categories, meeting, canPublish, canArchive, showTime, showLocation, defaultLocation }: Props) {
+export function MeetingForm({ categories, meeting, canPublish, canArchive, showTime, showLocation, defaults }: Props) {
   const router = useRouter()
   const editing = Boolean(meeting)
+  const initial = editing ? undefined : defaults
 
   const [values, setValues] = useState({
-    title: meeting?.title ?? '',
-    category_id: meeting?.category_id ?? '',
-    meeting_date: meeting?.meeting_date ?? '',
-    meeting_time: meeting?.meeting_time?.slice(0, 5) ?? '',
-    location: meeting?.location ?? (editing ? '' : defaultLocation ?? ''),
+    title: meeting?.title ?? initial?.title ?? '',
+    category_id: meeting?.category_id ?? initial?.categoryId ?? '',
+    meeting_date: meeting?.meeting_date ?? initial?.date ?? '',
+    meeting_time: meeting?.meeting_time?.slice(0, 5) ?? initial?.time ?? '',
+    location: meeting?.location ?? initial?.location ?? '',
     description: meeting?.description ?? '',
     status: meeting?.status ?? 'draft',
     minutes_status: meeting?.minutes_status ?? 'not_available',

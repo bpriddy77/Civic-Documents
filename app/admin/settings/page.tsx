@@ -1,4 +1,5 @@
 import { requirePermission } from '@/lib/auth/session'
+import { createServerSupabase } from '@/lib/supabase/server'
 import { tenantConfig } from '@/lib/data/tenant'
 import { SettingsForm } from '@/components/admin/SettingsForm'
 import { siteUrl } from '@/lib/env'
@@ -18,6 +19,16 @@ export default async function SettingsPage() {
 
   const config = tenantConfig(session.municipality)
 
+  const supabase = await createServerSupabase()
+  const { data: categories } = await supabase
+    .from('meeting_categories')
+    .select('id, name, slug')
+    .eq('municipality_id', session.municipality.id)
+    .eq('active', true)
+    .is('archived_at', null)
+    .order('display_order')
+    .order('name')
+
   return (
     <>
       <h1 className="text-2xl font-semibold">Settings</h1>
@@ -26,7 +37,11 @@ export default async function SettingsPage() {
         change or a redeployment.
       </p>
 
-      <SettingsForm municipality={session.municipality} config={config} />
+      <SettingsForm
+        municipality={session.municipality}
+        config={config}
+        categories={categories ?? []}
+      />
 
       <section aria-labelledby="embed-heading" className="mt-12 rounded border border-rule bg-paper p-4">
         <h2 id="embed-heading" className="font-display text-lg font-semibold">

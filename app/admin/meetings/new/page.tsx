@@ -3,6 +3,7 @@ import { requirePermission } from '@/lib/auth/session'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { can } from '@/lib/permissions/permissions'
 import { tenantConfig } from '@/lib/data/tenant'
+import { nextWeekdayInZone } from '@/lib/time/tenant-time'
 import { MeetingForm } from '@/components/admin/MeetingForm'
 
 export const dynamic = 'force-dynamic'
@@ -14,16 +15,31 @@ export default async function NewMeetingPage() {
 
   const { data: categories } = await supabase
     .from('meeting_categories')
-    .select('id, name')
+    .select('id, name, slug')
     .eq('municipality_id', session.profile.municipality_id!)
     .eq('active', true)
     .is('archived_at', null)
     .order('display_order')
     .order('name')
 
-  const config = session.municipality
-    ? tenantConfig(session.municipality)
-    : { show_meeting_time: true, show_location: true, default_meeting_location: '' }
+  const config = tenantConfig(session.municipality)
+
+  // The defaults a city sets in Settings. Each one is independent: a city that
+  // only ever wants a default time leaves the rest blank and gets an otherwise
+  // empty form.
+  const timezone = session.municipality?.timezone ?? 'America/Chicago'
+  const weekday = config.default_meeting_weekday
+  const defaultCategory = config.default_category_slug
+    ? (categories ?? []).find((category) => category.slug === config.default_category_slug)
+    : undefined
+
+  const defaults = {
+    title: config.default_meeting_title,
+    categoryId: defaultCategory?.id ?? '',
+    date: weekday >= 0 ? nextWeekdayInZone(weekday, timezone) : '',
+    time: config.default_meeting_time,
+    location: config.default_meeting_location,
+  }
 
   return (
     <>
@@ -47,7 +63,7 @@ export default async function NewMeetingPage() {
           canArchive={can(session.profile.role, 'meeting.archive')}
           showTime={config.show_meeting_time !== false}
           showLocation={config.show_location !== false}
-          defaultLocation={config.default_meeting_location}
+          defaults={defaults}
         />
       )}
     </>

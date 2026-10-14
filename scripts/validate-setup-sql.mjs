@@ -227,6 +227,62 @@ try {
   }
 }
 
+// The Forsan defaults seed (migration 1100) merges rather than overwrites.
+//
+// The direction of `||` decides this: `defaults || configuration` lets the
+// stored configuration win, which is what preserves a clerk's own choice.
+// Reversed, it would silently reset their settings on every re-run of the
+// setup script — and the setup script is pasted again whenever anything else
+// needs re-applying, so that would be a recurring, unexplained reversion.
+const seed = `
+update public.municipalities
+   set configuration = jsonb_build_object(
+         'default_meeting_title',   'Regular Meeting',
+         'default_category_slug',   'city-council',
+         'default_meeting_weekday', 2,
+         'default_meeting_time',    '18:00'
+       ) || coalesce(configuration, '{}'::jsonb)
+ where slug = 'city-of-forsan';
+`
+
+try {
+  await db.exec(`insert into public.municipalities (name, slug, timezone)
+                 values ('City of Forsan', 'city-of-forsan', 'America/Chicago')`)
+  await db.exec(seed)
+  const { rows } = await db.query(
+    `select configuration->>'default_meeting_title'           as title,
+            configuration->>'default_meeting_time'            as time,
+            (configuration->>'default_meeting_weekday')::int  as weekday,
+            configuration->>'default_category_slug'           as category
+       from public.municipalities where slug='city-of-forsan'`)
+  const got = rows[0]
+  if (got.title === 'Regular Meeting' && got.time === '18:00'
+      && got.weekday === 2 && got.category === 'city-council') {
+    console.log('✓ Forsan defaults seeded (Regular Meeting, City Council, Tuesday, 18:00).')
+  } else {
+    console.log(`✗ Forsan defaults wrong: ${JSON.stringify(got)}`)
+    failed = true
+  }
+
+  // A clerk changes the time in Settings. Re-running must leave it alone.
+  await db.exec(`update public.municipalities
+                    set configuration = configuration || '{"default_meeting_time":"19:30"}'::jsonb
+                  where slug='city-of-forsan'`)
+  await db.exec(seed)
+  const after = await db.query(
+    `select configuration->>'default_meeting_time' as time
+       from public.municipalities where slug='city-of-forsan'`)
+  if (after.rows[0].time === '19:30') {
+    console.log('✓ Re-running the seed preserves a setting the city changed.')
+  } else {
+    console.log(`✗ Seed overwrote the city's own setting: ${after.rows[0].time}`)
+    failed = true
+  }
+} catch (error) {
+  console.log(`✗ Forsan defaults seed failed: ${error.message}`)
+  failed = true
+}
+
 // The audit log must reject modification.
 try {
   await db.exec(`insert into public.audit_log (action, entity_type) values ('test.event','meeting')`)

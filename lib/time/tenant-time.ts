@@ -57,6 +57,42 @@ export function formatMeetingWhen(
   return timePart ? `${datePart} at ${timePart}` : datePart
 }
 
+/** Sunday is 0, matching JavaScript's getDay(). -1 means no default weekday. */
+export const WEEKDAYS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+] as const
+
+/**
+ * The next occurrence of `weekday` on or after today, as YYYY-MM-DD.
+ *
+ * Computed from the municipality's own calendar date, not the server's. A
+ * server in UTC at 00:30 on Thursday is still Wednesday evening in Texas, and
+ * a naive calculation there would skip a whole week.
+ *
+ * Today counts: asked on a Thursday it returns that Thursday, because a clerk
+ * creating a meeting the morning of still means today. The date is editable
+ * either way.
+ */
+export function nextWeekdayInZone(weekday: number, timeZone: string, from?: Date): string {
+  const today = from ? new TZDate(from, timeZone) : TZDate.tz(timeZone)
+
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const day = today.getDate()
+  const delta = (weekday - today.getDay() + 7) % 7
+
+  // Plain UTC arithmetic from here: it rolls months and years over correctly
+  // and has no daylight saving to step on.
+  const target = new Date(Date.UTC(year, month, day + delta))
+  return target.toISOString().slice(0, 10)
+}
+
 /** Machine-readable value for <time dateTime="..."> */
 export function isoDateTime(startsAt: string): string {
   return new Date(startsAt).toISOString()

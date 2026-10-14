@@ -73,6 +73,17 @@ export const municipalityConfigurationSchema = z.object({
   privacy_policy_url: z.string().default(''),
   terms_url: z.string().default(''),
   default_meeting_location: z.string().max(200).default(''),
+  default_meeting_title: z.string().max(200).default(''),
+  // Empty means no default. Otherwise 24-hour HH:MM, as <input type="time"> uses.
+  default_meeting_time: z
+    .string()
+    .regex(/^$|^([01]\d|2[0-3]):[0-5]\d$/, 'Use a time like 18:00.')
+    .default(''),
+  // Sunday is 0, matching JavaScript's getDay(). -1 means no default day.
+  default_meeting_weekday: z.coerce.number().int().min(-1).max(6).default(-1),
+  // The category's slug, not its id: a slug survives a category being
+  // renamed or recreated, so the default does not quietly stop working.
+  default_category_slug: z.string().max(120).default(''),
   show_meeting_time: z.boolean().default(true),
   show_location: z.boolean().default(true),
   publish_pending_minutes: z.boolean().default(false),

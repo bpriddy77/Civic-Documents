@@ -15,6 +15,51 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.10.1] - 2026-10-14
+
+**Requires a database update** only to pre-fill the City of Forsan's own
+defaults. Re-run `supabase/setup/01-complete-schema.sql` in the SQL Editor. The
+new settings themselves need no schema change, and every existing city keeps
+exactly the form it has today until someone sets a default in Settings.
+
+### Added
+
+- **Defaults for the Create meeting form.** Settings now has a *New meeting
+  defaults* section: meeting title, category, day of the week, time, and the
+  location that was already there. A clerk creating the usual meeting types
+  nothing at all — the form opens with the regular meeting already described
+  and the date set to the next occurrence of the usual day.
+
+  Each default is independent, and each is per-city: a city that meets on
+  Tuesdays sets Tuesday, a city with no fixed pattern leaves the day blank.
+  Leaving a field blank starts that field empty, which is the behaviour before
+  this release.
+
+  Forsan ships configured: Regular Meeting, City Council, Tuesday, 6:00 PM,
+  City Hall. Agendas are posted the Thursday before, which does not change the
+  default — the next Tuesday counted from a Thursday is that same meeting.
+  Re-running the setup script does not overwrite a value the city has since
+  changed.
+
+- The day-of-the-week default is resolved against the **city's own time zone**,
+  not the server's and not the browser's. Between six and midnight Central, a
+  server in UTC is already on tomorrow's date; computing from it would have put
+  the default a day or a week out, and only in the evening.
+
+### Changed
+
+- Defaults apply only when creating a meeting. Editing one never fills a field
+  in, because a blank field on a saved meeting is a decision somebody made —
+  a cleared location, a meeting with no set time — and overwriting it would
+  quietly undo that.
+
+- The default category is stored as the category's slug rather than its id, so
+  the setting survives a category being renamed, or deleted and recreated while
+  tidying the list. A slug that no longer matches resolves to no default rather
+  than to a dangling reference.
+
+---
+
 ## [1.9.3] - 2026-10-14
 
 **Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`

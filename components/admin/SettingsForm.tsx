@@ -3,15 +3,21 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { StatusMessage } from '@/components/accessibility/StatusMessage'
-import { COMMON_TIME_ZONES } from '@/lib/time/tenant-time'
-import type { Municipality, MunicipalityConfiguration } from '@/lib/supabase/database.types'
+import { COMMON_TIME_ZONES, WEEKDAYS } from '@/lib/time/tenant-time'
+import type {
+  MeetingCategory,
+  Municipality,
+  MunicipalityConfiguration,
+} from '@/lib/supabase/database.types'
 
 export function SettingsForm({
   municipality,
   config,
+  categories,
 }: {
   municipality: Municipality
   config: Required<MunicipalityConfiguration>
+  categories: Pick<MeetingCategory, 'id' | 'name' | 'slug'>[]
 }) {
   const router = useRouter()
   const [form, setForm] = useState({
@@ -22,6 +28,10 @@ export function SettingsForm({
     contact_email: municipality.contact_email ?? '',
     contact_phone: municipality.contact_phone ?? '',
     default_meeting_location: config.default_meeting_location,
+    default_meeting_title: config.default_meeting_title,
+    default_meeting_time: config.default_meeting_time,
+    default_meeting_weekday: String(config.default_meeting_weekday),
+    default_category_slug: config.default_category_slug,
     archive_heading: config.archive_heading,
     archive_about: config.archive_about,
     privacy_policy_url: config.privacy_policy_url,
@@ -60,6 +70,10 @@ export function SettingsForm({
         contact_phone: form.contact_phone,
         configuration: {
           default_meeting_location: form.default_meeting_location,
+          default_meeting_title: form.default_meeting_title,
+          default_meeting_time: form.default_meeting_time,
+          default_meeting_weekday: Number(form.default_meeting_weekday),
+          default_category_slug: form.default_category_slug,
           archive_heading: form.archive_heading,
           archive_about: form.archive_about,
           privacy_policy_url: form.privacy_policy_url,
@@ -137,23 +151,84 @@ export function SettingsForm({
                    onChange={(e) => set('contact_phone', e.target.value)} />
           </div>
 
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded border border-rule bg-paper p-4">
+        <legend className="px-2 font-display text-lg font-semibold">New meeting defaults</legend>
+        <p className="max-w-prose px-2 text-sm text-ink-muted">
+          What the Create meeting form starts with. Most meetings are the regular one at the
+          usual day, time, and place, so filling these in means a clerk types nothing for a
+          routine meeting. Every one of them can still be changed on any meeting &mdash; a
+          special session at another hour is no harder to enter than it is now. Leave a field
+          blank to start that field empty.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="default_meeting_title" className="field-label">Meeting title</label>
+            <input
+              id="default_meeting_title"
+              className="field"
+              value={form.default_meeting_title}
+              onChange={(e) => set('default_meeting_title', e.target.value)}
+              placeholder="Regular Meeting"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="default_category_slug" className="field-label">Category</label>
+            <select
+              id="default_category_slug"
+              className="field"
+              value={form.default_category_slug}
+              onChange={(e) => set('default_category_slug', e.target.value)}
+            >
+              <option value="">No default</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="default_meeting_weekday" className="field-label">Day of the week</label>
+            <select
+              id="default_meeting_weekday"
+              className="field"
+              value={form.default_meeting_weekday}
+              onChange={(e) => set('default_meeting_weekday', e.target.value)}
+              aria-describedby="default-weekday-help"
+            >
+              <option value="-1">No default</option>
+              {WEEKDAYS.map((day) => (
+                <option key={day.value} value={String(day.value)}>{day.label}</option>
+              ))}
+            </select>
+            <p id="default-weekday-help" className="mt-1 text-sm text-ink-muted">
+              The date is set to the next one of these, counting today.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="default_meeting_time" className="field-label">Time</label>
+            <input
+              id="default_meeting_time"
+              type="time"
+              className="field"
+              value={form.default_meeting_time}
+              onChange={(e) => set('default_meeting_time', e.target.value)}
+            />
+          </div>
+
           <div className="sm:col-span-2">
-            <label htmlFor="default_meeting_location" className="field-label">
-              Default meeting location
-            </label>
+            <label htmlFor="default_meeting_location" className="field-label">Location</label>
             <input
               id="default_meeting_location"
               className="field"
               value={form.default_meeting_location}
               onChange={(e) => set('default_meeting_location', e.target.value)}
-              aria-describedby="default-location-help"
               placeholder="Forsan City Hall, 409 Ave D"
             />
-            <p id="default-location-help" className="mt-1 text-sm text-ink-muted">
-              Fills in the location when a new meeting is created. It can be changed on any
-              meeting, so a special meeting held elsewhere is still easy to enter. Leave blank
-              if meetings do not have a usual place.
-            </p>
           </div>
         </div>
       </fieldset>

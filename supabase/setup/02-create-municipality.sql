@@ -83,6 +83,13 @@ begin
       'meetings_per_page', 20,
       'default_sort', 'newest',
       'archive_heading', 'Meeting Agendas & Minutes',
+      -- Pre-fills the Create meeting form. The day and time are left unset
+      -- because they differ by city; set them in Settings once you know the
+      -- council's schedule.
+      'default_meeting_title', 'Regular Meeting',
+      'default_category_slug', 'city-council',
+      'default_meeting_weekday', -1,
+      'default_meeting_time', '',
       'show_meeting_time', true,
       'show_location', true,
       'publish_pending_minutes', false,

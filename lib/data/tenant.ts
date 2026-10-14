@@ -28,7 +28,12 @@ export const getMunicipalityBySlug = cache(async (slug?: string | null): Promise
   return data
 })
 
-/** Configuration with every default filled in, so callers never branch on undefined. */
-export function tenantConfig(municipality: Municipality) {
-  return municipalityConfigurationSchema.parse(municipality.configuration ?? {})
+/**
+ * Configuration with every default filled in, so callers never branch on
+ * undefined. Accepts null so a caller without a loaded municipality gets the
+ * same complete shape rather than assembling a partial literal that silently
+ * falls behind when a setting is added.
+ */
+export function tenantConfig(municipality: Municipality | null | undefined) {
+  return municipalityConfigurationSchema.parse(municipality?.configuration ?? {})
 }
