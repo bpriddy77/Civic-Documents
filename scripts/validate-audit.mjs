@@ -217,11 +217,47 @@ await check('clearing an alert frees the slot', async () => {
   return 'advisory posted after clearing'
 })
 
+// The sequence that actually broke in production, and that the test above
+// missed: an alert reaches its expiry without anyone pressing Clear, and the
+// city posts the next one. The partial unique index keyed only on
+// `cleared_at is null`, so the expired row held the slot forever while the
+// admin page — which also checks expires_at — showed no live alert.
+await check('an expired alert does not block the next one', async () => {
+  // Age the live alert into the past. Both timestamps move so the
+  // expires_at > published_at constraint still holds.
+  await db.query(
+    `update public.alerts
+        set published_at = now() - interval '2 hours',
+            expires_at   = now() - interval '1 hour'
+      where municipality_id = $1 and cleared_at is null`, [muni.id])
+
+  await db.query(
+    `insert into public.alerts (municipality_id, message, severity, expires_at)
+     values ($1, 'Burn ban in effect county-wide.', 'emergency', now() + interval '48 hours')`,
+    [muni.id])
+
+  const { rows } = await db.query(
+    `select count(*)::int as n from public.alerts
+      where municipality_id = $1 and cleared_at is null`, [muni.id])
+  if (rows[0].n !== 1) throw new Error(`expected 1 uncleared alert, found ${rows[0].n}`)
+  return 'posted after natural expiry'
+})
+
+await check('expiry is recorded separately from a manual clear', async () => {
+  const { rows } = await db.query(
+    `select action, count(*)::int as n from public.audit_log
+      where action in ('alert.expired', 'alert.cleared') group by action`)
+  const byAction = Object.fromEntries(rows.map((r) => [r.action, r.n]))
+  if (!byAction['alert.expired']) throw new Error('automatic expiry was not audited as alert.expired')
+  if (!byAction['alert.cleared']) throw new Error('manual clear was not audited as alert.cleared')
+  return `expired ${byAction['alert.expired']}, cleared ${byAction['alert.cleared']}`
+})
+
 await check('current_alert returns only the live one', async () => {
   const { rows } = await db.query(
     `select message, severity::text as severity from public.current_alert($1)`, [muni.id])
   if (rows.length !== 1) throw new Error(`expected 1 live alert, got ${rows.length}`)
-  if (rows[0].severity !== 'advisory') throw new Error(`wrong alert: ${rows[0].severity}`)
+  if (rows[0].severity !== 'emergency') throw new Error(`wrong alert: ${rows[0].severity}`)
   return rows[0].severity
 })
 

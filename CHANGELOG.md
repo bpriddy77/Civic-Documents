@@ -15,6 +15,32 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.9.3] - 2026-10-14
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. It retires any stuck alert as it goes, so an install that is
+currently blocked is unblocked by running it.
+
+### Fixed
+
+- **An expired alert blocked every new one.** Posting a second alert failed with *"An alert is already showing. Clear it before posting another"* while the Alerts page showed no alert at all.
+
+  The partial unique index enforcing one live alert per municipality was keyed only on `cleared_at is null`. Everywhere else — the RLS policy, the public API, `current_alert()`, and the admin page — "live" also requires `expires_at > now()`. An alert that reached its expiry without anyone pressing Clear therefore vanished from the website, showed as absent in the admin, and still held the slot.
+
+  Since expiry is the normal way an alert ends, this broke the second alert a city ever posted. `now()` cannot appear in an index predicate, so expired alerts are now retired by a `BEFORE INSERT` trigger instead.
+
+- The index carried a comment claiming expired alerts did not block a new one. They did. The comment described the intent and the predicate did not implement it.
+
+### Changed
+
+- Automatic expiry is audited as **`alert.expired`** rather than `alert.cleared`. Both end with `cleared_at` set, but only a deliberate clear records who did it — and after an emergency, "the clerk took it down" and "it timed out" are different facts.
+
+### Added
+
+- A regression test covering the sequence that actually failed: let an alert expire naturally, then post the next one. The existing test cleared the alert explicitly first, which is why it passed while production broke. Verified by removing the fix and confirming the test fails.
+
+---
+
 ## [1.9.2] - 2026-10-07
 
 **No database changes.**
