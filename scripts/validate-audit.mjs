@@ -125,6 +125,61 @@ await check('replacing a document preserves the public slug', async () => {
   return replaced
 })
 
+// Removing a document and then uploading a replacement.
+//
+// This is what a clerk does after posting the wrong file: Remove, then upload
+// the right one. Retiring leaves no active row, so a version derived from the
+// active row restarts at 1 and collides with the version 1 still in history —
+// the meeting's documents become permanently unuploadable, and the only
+// visible symptom is a 409 that says nothing about why.
+await check('a document can be re-uploaded after it was removed', async () => {
+  const live = await db.query(
+    `select id, public_slug from public.meeting_documents
+      where meeting_id = $1 and document_type = 'agenda' and active_version`, [meeting.id])
+  const slugBefore = live.rows[0].public_slug
+
+  await db.query(`select public.retire_meeting_document($1)`, [live.rows[0].id])
+
+  const none = await db.query(
+    `select count(*)::int as n from public.meeting_documents
+      where meeting_id = $1 and document_type = 'agenda' and active_version`, [meeting.id])
+  if (none.rows[0].n !== 0) throw new Error('retire left an active row')
+
+  const slugAfter = await upload('agenda', 3)
+
+  // The public URL is printed on notices and in packets. Coming back after a
+  // removal must not mint a new one, or every link already distributed dies.
+  if (slugAfter !== slugBefore) {
+    throw new Error(`public slug changed after removal: ${slugBefore} -> ${slugAfter}`)
+  }
+
+  const { rows } = await db.query(
+    `select max(version)::int as v, count(*)::int as n
+       from public.meeting_documents
+      where meeting_id = $1 and document_type = 'agenda'`, [meeting.id])
+  if (rows[0].v !== 3) throw new Error(`expected version 3, got ${rows[0].v}`)
+  return `version ${rows[0].v}, ${rows[0].n} rows, slug preserved`
+})
+
+// Withdrawing a document and replacing one are different events, and the
+// difference is the whole reason the audit log exists: "the clerk took this
+// down" and "a corrected version went up" need different answers if anyone
+// later asks what the city published and when.
+await check('a withdrawal is recorded as a removal, not a replacement', async () => {
+  const { rows } = await db.query(
+    `select action, count(*)::int as n from public.audit_log
+      where entity_type = 'document' and action in ('document.removed','document.superseded')
+      group by action order by action`)
+  const byAction = Object.fromEntries(rows.map((r) => [r.action, r.n]))
+  if (!byAction['document.removed']) {
+    throw new Error(`no document.removed recorded; got ${JSON.stringify(byAction)}`)
+  }
+  if (!byAction['document.superseded']) {
+    throw new Error(`replacements stopped being recorded: ${JSON.stringify(byAction)}`)
+  }
+  return `removed ${byAction['document.removed']}, superseded ${byAction['document.superseded']}`
+})
+
 // Every status transition writes an audit action, and each one used the
 // ambiguous concatenation.
 for (const [from, to] of [['published', 'archived'], ['archived', 'draft'], ['draft', 'published']]) {

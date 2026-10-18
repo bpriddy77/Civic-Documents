@@ -15,6 +15,44 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.10.2] - 2026-10-18
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. It repairs any meeting currently stuck — no data is lost and
+nothing needs re-uploading first.
+
+### Fixed
+
+- **A document removed from a meeting could never be uploaded again.** The
+  clerk saw *"The document could not be recorded against this meeting. Nothing
+  was saved."* on every attempt, and the meeting was permanently unable to
+  accept that document type.
+
+  Version numbers were derived from the document currently live, but the
+  uniqueness rule covers the whole history. Removing a document leaves nothing
+  live, so the count restarted at 1 and collided with the version 1 still in
+  history. Removing a wrong file and uploading the right one is the ordinary
+  correction, so this was reachable the first time anyone posted the wrong PDF.
+  Versions now continue from the highest ever issued for that meeting and type.
+
+- **Uploading again after a removal issued a new public URL.** Only a
+  replacement of a live document kept its address; a document that came back
+  after being removed was treated as a first upload and given a new one. Those
+  URLs are printed on posted notices and in meeting packets and are promised to
+  be permanent, so a clerk fixing a wrong file would have silently broken every
+  link already distributed. The address is now inherited from the previous
+  version whether or not it is still live.
+
+- **A withdrawn document was recorded in the audit log as having been
+  replaced.** Retiring a document marks it removed and stands it down in one
+  step, and the audit trigger tested for "stood down" first — so every
+  withdrawal was filed as `document.superseded`, and `document.removed` could
+  never be written at all. "The clerk took this down" and "a corrected version
+  went up" are different answers to a question about what the city published,
+  and the log now distinguishes them.
+
+---
+
 ## [1.10.1] - 2026-10-14
 
 **Requires a database update** only to pre-fill the City of Forsan's own
