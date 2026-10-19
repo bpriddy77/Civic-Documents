@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/categories', label: 'Categories', show: can(profile.role, 'category.read') },
     { href: '/admin/users', label: 'Users', show: can(profile.role, 'user.read') },
     { href: '/admin/alerts', label: 'Alerts', show: can(profile.role, 'alert.read') },
+    { href: '/admin/search', label: 'Website search', show: can(profile.role, 'municipality.update') },
     { href: '/admin/audit', label: 'Audit history', show: can(profile.role, 'audit.read') },
     { href: '/admin/settings', label: 'Settings', show: can(profile.role, 'municipality.update') },
   ].filter((link) => link.show)

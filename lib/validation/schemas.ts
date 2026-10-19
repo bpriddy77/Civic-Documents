@@ -89,6 +89,18 @@ export const municipalityConfigurationSchema = z.object({
   publish_pending_minutes: z.boolean().default(false),
   max_upload_mb: z.coerce.number().int().min(1).max(50).default(25),
   primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#1B3A5C'),
+
+  // Site search. Off until a city is on a plan that includes it: the
+  // database enforces this, not the widget, because the widget is a
+  // public file anyone can copy.
+  search_enabled: z.boolean().default(false),
+  // Extra origins to crawl beyond the city's main website. Most cities
+  // need none; a city running a separate parks or library site does.
+  search_domains: z.array(z.string()).max(10).default([]),
+  // Where this deployment serves published records. Filled in from the
+  // deployment's own site URL when settings are saved, so that links to
+  // agendas and minutes in search results are absolute and correct.
+  records_base_url: z.string().default(''),
 })
 
 export const municipalityInputSchema = z.object({
@@ -118,6 +130,24 @@ export const publicQuerySchema = z.object({
 })
 
 export type PublicQuery = z.infer<typeof publicQuerySchema>
+
+/**
+ * Site search.
+ *
+ * `q` has a generous maximum and no pattern. Whatever a resident types
+ * must produce either results or none, never a validation error:
+ * `websearch_to_tsquery` cannot be made to fail by punctuation, so
+ * there is nothing here to protect the database from, and rejecting an
+ * apostrophe would only break the search box.
+ */
+export const searchQuerySchema = z.object({
+  municipality: z.string().trim().min(1, 'A municipality is required.').max(120),
+  q: z.string().max(300).default(''),
+  page: z.coerce.number().int().min(1).max(200).default(1),
+  perPage: z.coerce.number().int().min(1).max(50).default(10),
+})
+
+export type SearchQuery = z.infer<typeof searchQuerySchema>
 
 /** Flattens a Zod error into `{ field: message }` for form display. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {

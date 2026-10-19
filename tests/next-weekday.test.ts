@@ -73,3 +73,28 @@ describe('nextWeekdayInZone', () => {
     }
   })
 })
+
+describe('formatInstant', () => {
+  it('shows a stored timestamp in the municipality time, not UTC', async () => {
+    const { formatInstant } = await import('@/lib/time/tenant-time')
+    // The nightly crawl runs at 07:00 UTC. Reported as UTC that reads as
+    // the middle of the working day; in Texas it is the small hours, which
+    // is when it actually ran and what someone reading the page needs.
+    const summer = formatInstant('2026-10-19T07:00:00Z', CHICAGO)
+    expect(summer).toContain('Oct 19, 2026')
+    expect(summer).toContain('2:00 AM') // still CDT, UTC-5
+
+    // And the offset has to follow the clocks. US daylight saving ends on
+    // 1 November 2026, so the same scheduled job reports an hour earlier
+    // from then on. A formatter that sliced the ISO string would show
+    // 7:00 AM all year and be wrong twice over.
+    const winter = formatInstant('2026-11-19T07:00:00Z', CHICAGO)
+    expect(winter).toContain('1:00 AM') // CST, UTC-6
+  })
+
+  it('handles a missing or unparseable value without throwing', async () => {
+    const { formatInstant } = await import('@/lib/time/tenant-time')
+    expect(formatInstant(null, CHICAGO)).toBe('—')
+    expect(formatInstant('not a date', CHICAGO)).toBe('—')
+  })
+})

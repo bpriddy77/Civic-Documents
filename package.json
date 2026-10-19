@@ -1,6 +1,6 @@
 {
   "name": "local-government-records",
-  "version": "1.10.2",
+  "version": "1.11.0",
   "private": true,
   "description": "Agenda & minutes management and public records archive for municipalities.",
   "engines": {
@@ -26,6 +26,8 @@
     "validate:sql": "node scripts/validate-setup-sql.mjs",
     "release": "node scripts/build-release.mjs",
     "validate:audit": "node scripts/validate-audit.mjs",
+    "validate:search": "node scripts/validate-search.mjs",
+    "crawl": "node scripts/crawl-site.mjs",
     "backup": "node scripts/backup.mjs"
   },
   "dependencies": {
@@ -48,6 +50,8 @@
     "esbuild": "^0.24.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.0.3",
+    "node-html-parser": "^9.0.5",
+    "pdfjs-dist": "^6.4.299",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
     "tsx": "^4.19.2",

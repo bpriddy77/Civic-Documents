@@ -57,6 +57,27 @@ export function formatMeetingWhen(
   return timePart ? `${datePart} at ${timePart}` : datePart
 }
 
+/**
+ * An instant (a stored timestamp) rendered in the municipality's own time.
+ *
+ * Distinct from formatMeetingWhen, which takes a calendar date and a clock
+ * time a clerk typed. This takes a moment that actually happened — when a
+ * crawl ran, when a document was uploaded — and shows it as the local clock
+ * read at that moment. Slicing the ISO string instead would print UTC: an
+ * overnight job at 07:00 UTC would be reported as happening at 7am, which is
+ * the middle of the working day rather than the middle of the night.
+ */
+export function formatInstant(iso: string | null, timeZone: string): string {
+  if (!iso) return '—'
+  const at = new Date(iso)
+  if (Number.isNaN(at.getTime())) return '—'
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(at)
+}
+
 /** Sunday is 0, matching JavaScript's getDay(). -1 means no default weekday. */
 export const WEEKDAYS = [
   { value: 0, label: 'Sunday' },

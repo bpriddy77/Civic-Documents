@@ -240,6 +240,7 @@ iframe fallback, and how staff reach the administration from GoHighLevel.
 | [GOOGLE-SIGN-IN.md](docs/GOOGLE-SIGN-IN.md) | Signing in with Google instead of a password |
 | [INSTALLATION.md](docs/INSTALLATION.md) | Complete setup, GitHub through production |
 | [SUPABASE.md](docs/SUPABASE.md) | CLI workflow, project linking, storage, auth settings |
+| [SITE-SEARCH.md](docs/SITE-SEARCH.md) | Website search: what it indexes, the crawl, styling the search box |
 | [DATABASE.md](docs/DATABASE.md) | Schema, relationships, RLS policies, indexes |
 | [GHL-INTEGRATION.md](docs/GHL-INTEGRATION.md) | Public widget and administrative access |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Hosting, environment variables, releases |

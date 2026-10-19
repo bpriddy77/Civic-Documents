@@ -43,6 +43,8 @@ export function SettingsForm({
     show_location: config.show_location,
     publish_pending_minutes: config.publish_pending_minutes,
     max_upload_mb: String(config.max_upload_mb),
+    search_enabled: config.search_enabled,
+    search_domains: (config.search_domains ?? []).join('\n'),
   })
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -85,6 +87,11 @@ export function SettingsForm({
           show_location: form.show_location,
           publish_pending_minutes: form.publish_pending_minutes,
           max_upload_mb: Number(form.max_upload_mb),
+          search_enabled: form.search_enabled,
+          search_domains: form.search_domains
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean),
         },
       }),
     })
@@ -229,6 +236,53 @@ export function SettingsForm({
               onChange={(e) => set('default_meeting_location', e.target.value)}
               placeholder="Forsan City Hall, 409 Ave D"
             />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded border border-rule bg-paper p-4">
+        <legend className="px-2 font-display text-lg font-semibold">Website search</legend>
+        <p className="max-w-prose px-2 text-sm text-ink-muted">
+          Adds a search box to the city&rsquo;s website that looks across every page, every PDF
+          posted on it, and every agenda and set of minutes published here. Agendas and minutes
+          are searchable the moment they are posted; the rest of the site is checked once a
+          night.
+        </p>
+        <div className="mt-4 grid gap-4">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={form.search_enabled}
+              onChange={(e) => set('search_enabled', e.target.checked)}
+            />
+            <span>
+              <span className="font-medium">Website search is active</span>
+              <span className="block text-sm text-ink-muted">
+                While this is off, the search box returns nothing to anyone, including a page
+                that already has the code installed.
+              </span>
+            </span>
+          </label>
+
+          <div>
+            <label htmlFor="search_domains" className="field-label">
+              Additional websites to include
+            </label>
+            <textarea
+              id="search_domains"
+              className="field font-mono text-sm"
+              rows={3}
+              value={form.search_domains}
+              onChange={(e) => set('search_domains', e.target.value)}
+              aria-describedby="search-domains-help"
+              placeholder="https://parks.examplecity.gov"
+            />
+            <p id="search-domains-help" className="mt-1 text-sm text-ink-muted">
+              One address per line. The city&rsquo;s own website is always included, so most
+              cities leave this blank. Each site is read from its <code>sitemap.xml</code>, and
+              anything its <code>robots.txt</code> asks crawlers to skip is skipped.
+            </p>
           </div>
         </div>
       </fieldset>

@@ -2004,6 +2004,517 @@ on conflict (version) do update
 
 -- # END 20260101001200_reupload_after_removal.sql
 
+-- #####################################################################
+-- # BEGIN 20260101001300_site_search.sql
+-- #####################################################################
+
+-- =====================================================================
+-- 1300 - Site search
+--
+-- A search box for the city's whole public website: the pages built in
+-- GoHighLevel, the PDFs posted on them, and the agendas, minutes and
+-- other records this system already holds.
+--
+-- Two feeders write into one index:
+--
+--   direct  - meetings and their documents, written from their own
+--             tables the moment they are published. No crawl latency:
+--             a document is findable the second the clerk posts it.
+--
+--   crawled - everything else on the city's site, discovered nightly
+--             from sitemap.xml.
+--
+-- The direct feeder is the reason this is worth building rather than
+-- pointing residents at Google. Google will not have indexed an agenda
+-- posted an hour ago, and for a small city's site it may not have
+-- indexed anything at all.
+--
+-- Search itself is PostgreSQL's own full-text search. For a city site
+-- -- tens of pages, hundreds of documents -- a GIN index over a
+-- tsvector answers in single-digit milliseconds, and it is one fewer
+-- service to run, pay for, and have go down.
+-- =====================================================================
+
+do $$ begin
+  create type public.search_source as enum ('page', 'pdf', 'meeting', 'document');
+exception when duplicate_object then null;
+end $$;
+
+create table if not exists public.search_documents (
+  id              uuid primary key default gen_random_uuid(),
+  municipality_id uuid not null references public.municipalities (id) on delete cascade,
+
+  -- Where a resident lands when they click the result. Unique per
+  -- municipality: one row per address, updated in place, so repeated
+  -- crawls never accumulate duplicates of the same page.
+  url             text not null check (length(url) between 1 and 2048),
+
+  title           text not null check (length(btrim(title)) between 1 and 500),
+  source          public.search_source not null,
+  body            text not null default '',
+
+  -- What produced this row, so the direct feeder can find and update
+  -- its own entries without touching anything the crawler owns.
+  entity_type     text,
+  entity_id       uuid,
+
+  -- Skips re-indexing a page whose content has not changed, which keeps
+  -- a nightly crawl cheap and leaves indexed_at meaningful.
+  content_hash    text,
+
+  -- An image-only PDF extracts to nothing. It is indexed as an empty
+  -- body so the title is still findable, and flagged so the admin can
+  -- see that the document is unreadable -- to this search, and equally
+  -- to a resident using a screen reader.
+  text_layer      boolean not null default true,
+
+  indexed_at      timestamptz not null default now(),
+  last_seen_at    timestamptz not null default now(),
+
+  -- A page removed from the site stops appearing in results but is kept
+  -- for one more crawl, so a sitemap that is briefly wrong does not
+  -- silently empty the index.
+  removed_at      timestamptz,
+
+  search          tsvector generated always as (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(body, '')), 'B')
+  ) stored,
+
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+
+  unique (municipality_id, url)
+);
+
+create index if not exists search_documents_fts_idx
+  on public.search_documents using gin (search);
+
+create index if not exists search_documents_tenant_idx
+  on public.search_documents (municipality_id, removed_at);
+
+create index if not exists search_documents_entity_idx
+  on public.search_documents (municipality_id, entity_type, entity_id);
+
+comment on table public.search_documents is
+  'Search index for a municipality''s public website. Public content only: nothing here is written for an unpublished meeting or a document that is not live.';
+
+-- ---------------------------------------------------------------------
+-- Crawl runs
+--
+-- Kept so the admin can answer "is search up to date?" without anyone
+-- reading a log file, and so a crawl that quietly started failing three
+-- weeks ago is visible rather than inferred from stale results.
+-- ---------------------------------------------------------------------
+create table if not exists public.search_crawls (
+  id              uuid primary key default gen_random_uuid(),
+  municipality_id uuid not null references public.municipalities (id) on delete cascade,
+
+  started_at      timestamptz not null default now(),
+  finished_at     timestamptz,
+  status          text not null default 'running'
+                  check (status in ('running', 'succeeded', 'failed')),
+
+  urls_found      integer not null default 0,
+  pages_indexed   integer not null default 0,
+  pdfs_indexed    integer not null default 0,
+  unchanged       integer not null default 0,
+  removed         integer not null default 0,
+
+  -- Pages that could not be fetched, and PDFs with no text layer. These
+  -- are the actionable output of a crawl, not an error log.
+  warnings        jsonb not null default '[]'::jsonb,
+  error_message   text
+);
+
+create index if not exists search_crawls_tenant_idx
+  on public.search_crawls (municipality_id, started_at desc);
+
+-- ---------------------------------------------------------------------
+-- Access
+--
+-- Reading is public, because everything indexed is already a public
+-- page on a public website. It is gated per municipality anyway: a city
+-- that has not enabled the feature returns nothing, so the index cannot
+-- be queried before the city has agreed to publish it.
+--
+-- Writing is service-role only. The crawler runs as a scheduled job
+-- with no user session, and nothing a browser can reach may write to
+-- the index -- an index residents trust is one no visitor can edit.
+-- ---------------------------------------------------------------------
+alter table public.search_documents enable row level security;
+alter table public.search_crawls    enable row level security;
+
+grant select on public.search_documents to anon, authenticated;
+grant select on public.search_crawls to authenticated;
+
+drop policy if exists search_documents_public_read on public.search_documents;
+create policy search_documents_public_read on public.search_documents
+  for select to anon
+  using (
+    removed_at is null
+    and exists (
+      select 1 from public.municipalities m
+       where m.id = search_documents.municipality_id
+         and m.active
+         and coalesce((m.configuration ->> 'search_enabled')::boolean, false)
+    )
+  );
+
+drop policy if exists search_documents_member_read on public.search_documents;
+create policy search_documents_member_read on public.search_documents
+  for select to authenticated
+  using (public.is_super_admin() or municipality_id = public.current_municipality_id());
+
+drop policy if exists search_crawls_member_read on public.search_crawls;
+create policy search_crawls_member_read on public.search_crawls
+  for select to authenticated
+  using (public.is_super_admin() or municipality_id = public.current_municipality_id());
+
+-- ---------------------------------------------------------------------
+-- The query
+--
+-- A function rather than a view so the ranking, the snippet and the
+-- gate live in one place the API cannot accidentally diverge from.
+--
+-- `websearch_to_tsquery` is deliberate: it understands what a resident
+-- actually types -- quoted phrases, OR, a leading minus -- and, unlike
+-- `to_tsquery`, it cannot be made to raise a syntax error by a stray
+-- apostrophe or bracket. Search must never show an error page.
+-- ---------------------------------------------------------------------
+create or replace function public.search_site(
+  p_municipality_slug text,
+  p_query             text,
+  p_limit             integer default 20,
+  p_offset            integer default 0
+) returns table (
+  url      text,
+  title    text,
+  source   public.search_source,
+  snippet  text,
+  rank     real,
+  total    bigint
+)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with tenant as (
+    select m.id
+      from public.municipalities m
+     where m.slug = p_municipality_slug
+       and m.active
+       and coalesce((m.configuration ->> 'search_enabled')::boolean, false)
+  ),
+  q as (select websearch_to_tsquery('english', coalesce(p_query, '')) as tsq),
+  hits as (
+    select d.url, d.title, d.source, d.body,
+           -- Textual relevance, with a light tiebreaker by type.
+           --
+           -- Where two results are about equally relevant, the readable
+           -- page is marginally more useful than the PDF: someone asking
+           -- what the water deposit is wants the page that says $150
+           -- before the ordinance authorising the charge.
+           --
+           -- Deliberately light. A strong textual match on a document
+           -- still beats a weak one on a page, which is correct --
+           -- searching an ordinance by name must return the ordinance.
+           -- This only settles near-ties, it does not reorder results.
+           ts_rank(d.search, q.tsq) * case d.source
+             when 'page'     then 1.00
+             when 'meeting'  then 0.95
+             when 'document' then 0.90
+             when 'pdf'      then 0.85
+           end as rank
+      from public.search_documents d
+      join tenant t on t.id = d.municipality_id
+     cross join q
+     where d.removed_at is null
+       and q.tsq is not null
+       and d.search @@ q.tsq
+  )
+  select h.url, h.title, h.source,
+         -- Highlights are marked with sentinels, not with <mark> tags.
+         --
+         -- The snippet is built from text crawled off a web page, and
+         -- the widget has to render the highlight as markup. If the
+         -- markers were real tags, the widget would have to inject the
+         -- snippet as HTML -- and any page whose visible text contains
+         -- "<script>" would then run it in a resident's browser on the
+         -- city's own domain.
+         --
+         -- With sentinels the widget escapes the whole snippet first
+         -- and swaps these two tokens for <mark> afterwards, so nothing
+         -- that came off a page can ever become markup.
+         ts_headline('english', h.body, q.tsq,
+           'StartSel=[[hl]], StopSel=[[/hl]], MaxWords=30, MinWords=12, MaxFragments=1, FragmentDelimiter= … ')
+           as snippet,
+         h.rank,
+         count(*) over () as total
+    from hits h
+   cross join q
+   order by h.rank desc, h.title
+   limit greatest(1, least(coalesce(p_limit, 20), 50))
+  offset greatest(0, coalesce(p_offset, 0));
+$$;
+
+grant execute on function public.search_site(text, text, integer, integer)
+  to anon, authenticated;
+
+insert into public.schema_version (version, notes)
+values ('1.11.0', 'Site search: crawled pages and PDFs plus directly indexed records.')
+on conflict (version) do update
+  set applied_at = now(), notes = excluded.notes;
+
+-- # END 20260101001300_site_search.sql
+
+-- #####################################################################
+-- # BEGIN 20260101001400_search_index_records.sql
+-- #####################################################################
+
+-- =====================================================================
+-- 1400 - Index this system's own records directly
+--
+-- Meetings and their documents already live in this database, so there
+-- is no reason to discover them by crawling the website. They are
+-- written into the search index by trigger, in the same transaction
+-- that publishes them, which means a resident can find an agenda the
+-- moment the clerk posts it rather than after the next nightly crawl.
+--
+-- That immediacy is the whole argument for building this instead of
+-- telling residents to use Google. Google will not have the agenda an
+-- hour after it goes up, and for a new small-city site it may not have
+-- indexed anything at all.
+--
+-- THE INVARIANT THAT MATTERS
+--
+-- A draft meeting and an unapproved set of minutes must never be
+-- findable. The search index is a second route to content, and a
+-- second route is exactly where a visibility rule gets quietly
+-- reimplemented slightly differently and leaks something.
+--
+-- So nothing here restates the rule. Visibility is decided by the same
+-- `document_publicly_visible()` the public API and the RLS policy use.
+-- If that rule changes, this follows automatically.
+--
+-- Document bodies are filled in later by the crawler, which fetches
+-- the PDF and extracts its text layer. Until then a document is
+-- findable by its title, which is immediate and already useful.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- Where a published record lives on the public web.
+--
+-- `records_base_url` is set from the deployment's own site URL when
+-- settings are saved, so nobody types it. When it is missing the path
+-- is still stored and the links are relative rather than wrong, and
+-- the admin crawl page shows that it needs setting.
+-- ---------------------------------------------------------------------
+create or replace function public.records_url(p_municipality_id uuid, p_path text)
+returns text
+language sql
+stable
+set search_path = public, pg_temp
+as $$
+  select rtrim(coalesce(m.configuration ->> 'records_base_url', ''), '/') || p_path
+    from public.municipalities m
+   where m.id = p_municipality_id;
+$$;
+
+-- ---------------------------------------------------------------------
+-- Recompute every index row belonging to one meeting.
+--
+-- Written as "work out what should exist, then make that true" rather
+-- than as a set of insert/update/delete branches per event. A meeting
+-- being unpublished, a document being retired, minutes being
+-- un-approved and a title being corrected all reduce to the same
+-- operation, and the paths that remove content cannot be the ones that
+-- are missing.
+-- ---------------------------------------------------------------------
+create or replace function public.reindex_meeting(p_meeting_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_meeting public.meetings;
+  v_muni    public.municipalities;
+  v_keep    text[] := '{}';
+  v_url     text;
+  v_doc     record;
+begin
+  select * into v_meeting from public.meetings where id = p_meeting_id;
+  if not found then
+    -- The meeting is gone, so everything indexed under it goes too.
+    delete from public.search_documents
+     where entity_type in ('meeting', 'document')
+       and entity_id = p_meeting_id;
+    return;
+  end if;
+
+  select * into v_muni from public.municipalities where id = v_meeting.municipality_id;
+
+  -- The meeting's own page, if the public may see it.
+  if v_meeting.status in ('published', 'archived') and v_muni.active then
+    v_url := public.records_url(
+      v_meeting.municipality_id,
+      '/meetings/' || to_char(v_meeting.meeting_date, 'YYYY/MM/DD') || '/' || v_meeting.slug);
+    v_keep := v_keep || v_url;
+
+    insert into public.search_documents (
+      municipality_id, url, title, source, body, entity_type, entity_id, indexed_at, last_seen_at)
+    values (
+      v_meeting.municipality_id, v_url,
+      v_meeting.title || ' — ' || to_char(v_meeting.meeting_date, 'FMMonth FMDD, YYYY'),
+      'meeting',
+      coalesce(v_meeting.description, '') || ' ' || coalesce(v_meeting.location, ''),
+      'meeting', v_meeting.id, now(), now())
+    on conflict (municipality_id, url) do update
+      set title        = excluded.title,
+          source       = excluded.source,
+          body         = excluded.body,
+          entity_type  = excluded.entity_type,
+          entity_id    = excluded.entity_id,
+          removed_at   = null,
+          last_seen_at = now(),
+          updated_at   = now();
+  end if;
+
+  -- Each document the public may see. The body is left alone on
+  -- update: the crawler owns it, and overwriting it here would throw
+  -- away extracted PDF text every time a title was corrected.
+  for v_doc in
+    select d.*
+      from public.meeting_documents d
+     where d.meeting_id = p_meeting_id
+       and public.document_publicly_visible(d.id)
+  loop
+    v_url := public.records_url(
+      v_doc.municipality_id, '/documents/' || v_muni.slug || '/' || v_doc.public_slug);
+    v_keep := v_keep || v_url;
+
+    insert into public.search_documents (
+      municipality_id, url, title, source, body, entity_type, entity_id, indexed_at, last_seen_at)
+    values (
+      v_doc.municipality_id, v_url,
+      initcap(replace(v_doc.document_type, '_', ' ')) || ' — ' || v_meeting.title
+        || ' — ' || to_char(v_meeting.meeting_date, 'FMMonth FMDD, YYYY'),
+      'document', '', 'document', v_doc.id, now(), now())
+    on conflict (municipality_id, url) do update
+      set title        = excluded.title,
+          source       = excluded.source,
+          entity_type  = excluded.entity_type,
+          entity_id    = excluded.entity_id,
+          removed_at   = null,
+          last_seen_at = now(),
+          updated_at   = now();
+  end loop;
+
+  -- Anything previously indexed for this meeting that is no longer
+  -- publicly visible. Deleted outright rather than marked removed: this
+  -- is content that has been withdrawn or unpublished, and leaving a
+  -- row behind is how an unapproved set of minutes stays findable.
+  delete from public.search_documents
+   where municipality_id = v_meeting.municipality_id
+     and entity_type in ('meeting', 'document')
+     and (entity_id = v_meeting.id
+          or entity_id in (select id from public.meeting_documents
+                            where meeting_id = p_meeting_id))
+     and not (url = any (v_keep));
+end $$;
+
+-- ---------------------------------------------------------------------
+-- Triggers
+-- ---------------------------------------------------------------------
+create or replace function public.search_index_meeting()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  perform public.reindex_meeting(coalesce(new.id, old.id));
+  return coalesce(new, old);
+end $$;
+
+create or replace function public.search_index_document()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  perform public.reindex_meeting(coalesce(new.meeting_id, old.meeting_id));
+  return coalesce(new, old);
+end $$;
+
+drop trigger if exists meetings_search_index on public.meetings;
+create trigger meetings_search_index
+  after insert or update or delete on public.meetings
+  for each row execute function public.search_index_meeting();
+
+drop trigger if exists documents_search_index on public.meeting_documents;
+create trigger documents_search_index
+  after insert or update or delete on public.meeting_documents
+  for each row execute function public.search_index_document();
+
+-- ---------------------------------------------------------------------
+-- A settings change can alter what the public may see.
+--
+-- Turning on `publish_pending_minutes` makes every unapproved set of
+-- minutes in the city public at once, and turning it back off makes
+-- them private again. Without this, the index would keep answering by
+-- the old setting -- and the direction that matters is the second one,
+-- where minutes the council has not approved would remain findable
+-- after the city decided they should not be.
+-- ---------------------------------------------------------------------
+create or replace function public.search_reindex_municipality()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare v_id uuid;
+begin
+  if coalesce(old.configuration ->> 'publish_pending_minutes', '')
+     is distinct from coalesce(new.configuration ->> 'publish_pending_minutes', '')
+     or coalesce(old.configuration ->> 'records_base_url', '')
+        is distinct from coalesce(new.configuration ->> 'records_base_url', '')
+     or old.active is distinct from new.active
+     or old.slug is distinct from new.slug
+  then
+    for v_id in select id from public.meetings where municipality_id = new.id loop
+      perform public.reindex_meeting(v_id);
+    end loop;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists municipalities_search_reindex on public.municipalities;
+create trigger municipalities_search_reindex
+  after update on public.municipalities
+  for each row execute function public.search_reindex_municipality();
+
+-- ---------------------------------------------------------------------
+-- Backfill for an install that already has records.
+-- ---------------------------------------------------------------------
+do $$
+declare v_id uuid;
+begin
+  for v_id in select id from public.meetings loop
+    perform public.reindex_meeting(v_id);
+  end loop;
+end $$;
+
+insert into public.schema_version (version, notes)
+values ('1.11.0', 'Site search: crawled pages and PDFs plus directly indexed records.')
+on conflict (version) do update
+  set applied_at = now(), notes = excluded.notes;
+
+-- # END 20260101001400_search_index_records.sql
+
 -- =====================================================================
 -- Done. Verify with the queries in docs/WEB-SETUP.md, Step 5.
 -- =====================================================================

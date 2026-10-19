@@ -13,6 +13,43 @@ export type AppRole = 'super_admin' | 'admin' | 'editor' | 'read_only'
 export type MeetingStatus = 'draft' | 'published' | 'archived'
 export type MinutesStatus = 'not_available' | 'draft' | 'pending_approval' | 'approved'
 export type AlertSeverity = 'emergency' | 'advisory' | 'information'
+export type SearchSource = 'page' | 'pdf' | 'meeting' | 'document'
+
+/** One indexed address on a municipality's public website. */
+export type SearchDocument = {
+  id: string
+  municipality_id: string
+  url: string
+  title: string
+  source: SearchSource
+  body: string
+  entity_type: string | null
+  entity_id: string | null
+  content_hash: string | null
+  /** False when a PDF is a scan: unsearchable here, unreadable to a screen reader. */
+  text_layer: boolean
+  indexed_at: string
+  last_seen_at: string
+  removed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** One run of the nightly crawl, kept so staleness is visible rather than inferred. */
+export type SearchCrawl = {
+  id: string
+  municipality_id: string
+  started_at: string
+  finished_at: string | null
+  status: 'running' | 'succeeded' | 'failed'
+  urls_found: number
+  pages_indexed: number
+  pdfs_indexed: number
+  unchanged: number
+  removed: number
+  warnings: { url: string; reason: string }[]
+  error_message: string | null
+}
 
 export type Alert = {
   id: string
@@ -51,6 +88,9 @@ export type MunicipalityConfiguration = {
   publish_pending_minutes?: boolean
   max_upload_mb?: number
   primary_color?: string
+  search_enabled?: boolean
+  search_domains?: string[]
+  records_base_url?: string
 }
 
 export type Municipality = {
@@ -240,6 +280,8 @@ export type Database = {
       >
       audit_log: Table<AuditLogEntry, BelongsToMunicipality<'audit_log_municipality_id_fkey'>>
       alerts: Table<Alert, BelongsToMunicipality<'alerts_municipality_id_fkey'>>
+      search_documents: Table<SearchDocument, BelongsToMunicipality<'search_documents_municipality_id_fkey'>>
+      search_crawls: Table<SearchCrawl, BelongsToMunicipality<'search_crawls_municipality_id_fkey'>>
       role_permissions: Table<{ role: AppRole; permission: string }>
       document_types: Table<{ code: string; label: string; display_order: number; active: boolean }>
     }
@@ -286,6 +328,29 @@ export type Database = {
       retire_meeting_document: {
         Args: { p_document_id: string }
         Returns: MeetingDocument
+      }
+      /**
+       * Ranked site search for one municipality.
+       *
+       * Returns nothing at all unless that municipality has search
+       * enabled, so the gate cannot be bypassed by calling this directly.
+       * Highlights in `snippet` are [[hl]] sentinels, never markup.
+       */
+      search_site: {
+        Args: {
+          p_municipality_slug: string
+          p_query: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          url: string
+          title: string
+          source: SearchSource
+          snippet: string
+          rank: number
+          total: number
+        }[]
       }
     }
     Enums: {

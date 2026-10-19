@@ -3,6 +3,7 @@ import { requirePermission } from '@/lib/auth/session'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { municipalityInputSchema } from '@/lib/validation/schemas'
 import { invalid } from '@/lib/errors'
+import { siteUrl } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,15 @@ export const PATCH = handler(async (request: Request) => {
       ...(input.contact_phone !== undefined && { contact_phone: input.contact_phone || null }),
       ...(input.contact_address !== undefined && { contact_address: input.contact_address || null }),
       ...(input.configuration !== undefined && {
-        configuration: { ...(current?.configuration ?? {}), ...input.configuration },
+        configuration: {
+          ...(current?.configuration ?? {}),
+          ...input.configuration,
+          // Set from the deployment rather than typed. Search results for
+          // agendas and minutes need an absolute address, and asking a
+          // clerk to keep a base URL in step with a deployment is a
+          // setting that will be wrong within a year.
+          records_base_url: siteUrl,
+        },
       }),
     })
     .eq('id', session.profile.municipality_id!)

@@ -1,0 +1,74 @@
+name: Nightly site crawl
+
+# Reads each city's public website into the search index: every page in its
+# sitemap, every PDF posted on it, and the text of the agendas and minutes
+# this system publishes.
+#
+# Agendas and minutes are added to the index the moment a clerk posts them,
+# by a database trigger rather than by this job. This fills in the contents
+# of those PDFs and picks up everything on the rest of the site.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#
+#   SUPABASE_URL                 https://<ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    Supabase -> Project Settings -> API
+#
+# These are the same two secrets the backup workflow uses. Cities that have
+# not enabled website search are skipped, so this is safe to leave running
+# whether or not anyone is on that plan.
+
+on:
+  schedule:
+    # 07:00 UTC daily — roughly 1am US Central, so a page edited during the
+    # working day is searchable the following morning.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      municipality:
+        description: 'Slug of a single city to crawl (blank for all)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Report what would be indexed without writing anything'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  crawl:
+    name: Crawl public websites
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22+ required: supabase-js uses the native WebSocket API, which
+          # Node 20 does not provide. Keep in step with package.json
+          # engines — tests/workflows.test.ts enforces it.
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        # Same reasoning as the backup workflow: a version bump committed
+        # without a refreshed lockfile should not silently stop the index
+        # being updated for weeks.
+        run: npm ci || npm install --no-audit --no-fund
+
+      - name: Crawl
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.municipality }}" ]; then ARGS="$ARGS ${{ inputs.municipality }}"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          npm run crawl -- $ARGS
+
+      # A crawl that starts failing is invisible: search keeps answering
+      # from the last good index, so results simply get quietly older. The
+      # job exiting non-zero makes GitHub email the repository owner, which
+      # is the only thing that turns stale results into a noticed problem.
+      # The same information is on the Website search page in the admin.

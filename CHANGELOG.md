@@ -15,6 +15,85 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.11.0] - 2026-10-19
+
+**Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
+in the SQL Editor. Existing records are added to the new search index as it
+runs; nothing needs re-publishing.
+
+### Added
+
+- **Website search.** A search box for the city's whole public site: the pages
+  built in the site builder, the PDFs posted on them, and every agenda and set
+  of minutes published here. One box, one list of results.
+
+  Switched on per city in **Settings → Website search**, and off by default.
+  While it is off the search box returns nothing to anyone — enforced in the
+  database rather than by withholding the code, because the widget is a public
+  file that anyone can copy and call.
+
+- **Agendas and minutes are searchable the moment they are posted.** They are
+  written to the index by the database as part of publishing them, not
+  discovered later by a crawl. That immediacy is the argument for this over
+  pointing residents at a search engine, which will not have an agenda posted
+  an hour ago and may not have indexed a new city site at all.
+
+  Nothing private is ever indexed. A draft meeting and unapproved minutes are
+  absent from the index, not merely hidden from results, and the index uses the
+  same visibility rule as the public API and the security policy rather than
+  restating it. Unpublishing, retiring a document or un-approving minutes
+  removes the entry immediately.
+
+- **A nightly crawl** of the rest of the site, read from `sitemap.xml` and
+  honouring `robots.txt`. Runs at 07:00 UTC, and on demand from the Actions tab
+  with a dry-run option.
+
+  It discards text that repeats across most pages before indexing. Without
+  that, the navigation and footer on every page mean a search for "water"
+  matches all thirty pages and ranks none — a search box that returns
+  everything is worse than none. Detecting furniture by its repetition works on
+  any site and survives a redesign, where CSS selectors would need tuning per
+  city.
+
+- **Website search** admin page: what is indexed, when the site was last read,
+  and what could not be read.
+
+- **Scanned PDFs are counted and listed.** A scan has no text, so it cannot be
+  searched — and cannot be read by a screen reader either. The page says so,
+  which turns an invisible accessibility problem into a visible one.
+
+- **The search box is themeable without touching the embed code.** It renders
+  in a shadow root so a site redesign cannot break it; custom properties cross
+  that boundary, so colours, fonts, spacing and corner rounding are set from
+  the site's own CSS. Every label can be replaced, and a `css` option styles
+  anything the properties do not cover. See
+  [docs/SITE-SEARCH.md](docs/SITE-SEARCH.md).
+
+  Link colour is a separate property from the accent colour on purpose: a brand
+  colour pale enough to need dark text on a button is usually too pale to carry
+  link text on white, and splitting them keeps the brand without failing
+  contrast.
+
+### Security
+
+- Result snippets can never carry markup out of a crawled page. Highlights
+  arrive as sentinels rather than tags, and the widget escapes everything
+  before turning those two tokens into `<mark>` — so a page whose own visible
+  text contains a script tag cannot run anything in a resident's browser on the
+  city's domain.
+
+- Nothing a browser can reach may write to the index. The crawler runs as a
+  scheduled job with the service role; an anonymous visitor can read a search
+  result and nothing else.
+
+### Privacy
+
+- Search queries are answered and not stored. No search log, no per-resident
+  history, and no third party: no analytics service and no search engine learns
+  what residents are looking up on the city's site.
+
+---
+
 ## [1.10.2] - 2026-10-18
 
 **Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`
