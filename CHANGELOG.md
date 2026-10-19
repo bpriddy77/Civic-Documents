@@ -15,6 +15,27 @@ or run `supabase/setup/03-verify.sql`.
 
 ---
 
+## [1.11.1] - 2026-10-19
+
+No database change. Re-running the schema script is not needed.
+
+### Fixed
+
+- **Duplicate files left by unpacking a release over an existing checkout are
+  now caught by name.** Finder and several unzip tools do not replace a file
+  that is already there — they keep both, as `core_schema 2.sql`. Committed,
+  that leaves two copies of the same migration, and the database applies both.
+
+  The symptom was nothing like the cause: `duplicate key value violates unique
+  constraint "schema_migrations_pkey"` during a reset, pointing at the schema
+  rather than at a stray file. Three checks now fail immediately and name the
+  file, the reason and the command to remove it, and the release build refuses
+  to package one.
+
+  To avoid it: delete the old directory before unpacking, or unzip with `-o`.
+
+---
+
 ## [1.11.0] - 2026-10-19
 
 **Requires a database update.** Re-run `supabase/setup/01-complete-schema.sql`

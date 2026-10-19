@@ -50,6 +50,17 @@ if (!changelog.includes(`## [${recorded}]`)) {
   fail(`Schema version ${recorded} has no changelog entry.`)
 }
 
+// Duplicate copies left by unpacking a release over an existing checkout.
+// Packaging them ships a migration that will be applied twice.
+for (const name of readdirSync(migrationsDir)) {
+  if (/ \d+\.[A-Za-z0-9]+$/.test(name)) {
+    fail(
+      `"${name}" looks like a copy left by unzipping over an existing checkout.\n` +
+        `  Delete it before building: a duplicated migration is applied twice.`,
+    )
+  }
+}
+
 // The generated setup SQL must include every migration, or a dashboard install
 // silently gets an older schema than a CLI install.
 const setup = readFileSync('supabase/setup/01-complete-schema.sql', 'utf8')
